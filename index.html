@@ -378,7 +378,7 @@
         const dateiname = `Atemschutz_Pruefung_${datumVal}_${agtName.replace(/\s+/g, '_')}.pdf`;
 
         try {
-            // 1. PDF zuerst im Speicher als Vektor aufbauen
+            // 1. PDF im Speicher als Vektor generieren
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
 
@@ -499,10 +499,11 @@
             doc.setTextColor(100, 100, 100);
             doc.text(`Unterschrieben von ${agtName} am ${datumVal}`, 14, currentY + 31);
 
-            // 2. PDF als Base64-String auslesen für den E-Mail-Anhang
-            const pdfBase64 = doc.output('base64');
+            // 2. Reine Base64-Zeichenkette ohne Header extrahieren
+            const pdfDataUri = doc.output('datauristring');
+            const pdfBase64 = pdfDataUri.split(',')[1];
 
-            // 3. Formulardaten UND PDF-Base64 an Google Sheets senden
+            // 3. Daten inkl. Base64-PDF an Google Sheets & Apps Script senden
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
@@ -527,7 +528,7 @@
                 })
             });
 
-            // 4. PDF lokal auf dem Gerät speichern
+            // 4. PDF lokal auf dem Handy/PC speichern
             doc.save(dateiname);
 
             if (method === 'whatsapp') {
