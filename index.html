@@ -58,7 +58,7 @@
             <h4>Atemschutz Verwendungs- & Prüfnachweis</h4>
         </div>
 
-        <form id="atemschutzForm">
+        <form id="atemschutzForm" onsubmit="return false;">
             
             <!-- 1. Allgemeine Angaben -->
             <h5 class="section-header">1. Allgemeine Angaben</h5>
@@ -88,6 +88,7 @@
                 <label for="agt_select" class="form-label fw-bold">Geräteträger auswählen</label>
                 <select class="form-select" id="agt_select" required onchange="toggleCustomNameInput()">
                     <option value="" selected disabled>-- Bitte Namen auswählen --</option>
+                    <!-- Hier können Namen ergänzt werden -->
                     <option value="Stefan Brauner">Stefan Brauner</option>
                     <option value="Kamerad 1">Kamerad 1</option>
                     <option value="Kamerad 2">Kamerad 2</option>
@@ -199,16 +200,16 @@
                 </div>
             </div>
 
-            <!-- Zwei Sende-Buttons -->
+            <!-- ZWEI SEPARATE BUTTONS -->
             <div class="row g-2 mt-4 no-print">
                 <div class="col-md-6">
-                    <button type="button" class="btn btn-success btn-lg w-100" onclick="processForm('whatsapp')">
-                        💬 PDF & WhatsApp senden
+                    <button type="button" class="btn btn-success btn-lg w-100 fw-bold" onclick="processForm('whatsapp')">
+                        💬 PDF & per WhatsApp senden
                     </button>
                 </div>
                 <div class="col-md-6">
-                    <button type="button" class="btn btn-primary btn-lg w-100" onclick="processForm('email')">
-                        ✉️ PDF & Per E-Mail senden
+                    <button type="button" class="btn btn-primary btn-lg w-100 fw-bold" onclick="processForm('email')">
+                        ✉️ PDF & per E-Mail senden
                     </button>
                 </div>
             </div>
@@ -243,10 +244,11 @@
     let html5QrCode = null;
     let signaturePad = null;
 
-    // Ziel-Kontakte
+    // Kontaktdaten
     const TARGET_PHONE = "4915159870171";
     const TARGET_EMAIL = "stefan.brauner@g4more.de";
 
+    // Steuerung des manuellen Namensfeldes
     function toggleCustomNameInput() {
         const select = document.getElementById('agt_select');
         const customDiv = document.getElementById('custom_name_div');
@@ -262,11 +264,11 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-        // Datum vorbelegen
+        // Datum auf heute setzen
         const datumInput = document.getElementById('datum');
         if (datumInput) datumInput.valueAsDate = new Date();
 
-        // Signature Pad Initialisieren
+        // Unterschriftenfeld initialisieren
         const canvas = document.getElementById('signature-pad');
         if (canvas && typeof SignaturePad !== 'undefined') {
             signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
@@ -286,16 +288,17 @@
         }
     });
 
-    // Hauptfunktion zur Verarbeitung (WhatsApp oder E-Mail)
+    // Hauptfunktion zum Erstellen & Versenden
     async function processForm(method) {
         const form = document.getElementById('atemschutzForm');
         
-        // Formular-Validierung erzwingen
+        // Pflichtfelder prüfen
         if (!form.checkValidity()) {
             form.reportValidity();
             return;
         }
 
+        // Unterschrift prüfen
         if (signaturePad && signaturePad.isEmpty()) {
             alert('Bitte leiste eine Unterschrift vor dem Absenden!');
             return;
@@ -342,12 +345,12 @@
                 const whatsappText = `Hallo Stefan,%0A%0Aanbei mein Atemschutz-Prüfnachweis.%0A%0A👤 *Geräteträger:* ${encodeURIComponent(agtName)}%0A📅 *Datum:* ${encodeURIComponent(datumVal)}%0A🚒 *Anlass:* ${encodeURIComponent(anlassVal)}%0A%0A_(PDF wurde auf meinem Gerät gespeichert und ist als Anhang beigefügt.)_`;
                 const whatsappUrl = `https://wa.me/${TARGET_PHONE}?text=${whatsappText}`;
 
-                alert('PDF wurde gespeichert! WhatsApp öffnet sich jetzt. Bitte füge die PDF-Datei dort als Anhang bei.');
+                alert('PDF wurde gespeichert! WhatsApp öffnet sich jetzt. Bitte füge dort die PDF-Datei als Anhang bei.');
                 window.location.href = whatsappUrl;
 
             } else if (method === 'email') {
                 const subject = `Atemschutz-Prüfnachweis: ${agtName} (${datumVal})`;
-                const body = `Hallo Stefan,%0A%0Aanbei übermittle ich dir meinen Atemschutz-Prüfnachweis.%0A%0AGeräteträger: ${agtName}%0ADatum: ${datumVal}%0AAnlass: ${anlassVal}%0A%0AHinweis: Die erstellte PDF-Datei befindet sich in meinen Downloads. Ich habe sie dieser Mail als Anhang beigefügt.%0A%0AViele Grüße`;
+                const body = `Hallo Stefan,%0A%0Aanbei übermittle ich dir meinen Atemschutz-Prüfnachweis.%0A%0AGeräteträger: ${agtName}%0ADatum: ${datumVal}%0AAnlass: ${anlassVal}%0A%0AHinweis: Die erstellte PDF-Datei befindet sich in meinen Downloads und ist dieser Mail als Anhang beigefügt.%0A%0AViele Grüße`;
                 
                 const mailtoUrl = `mailto:${TARGET_EMAIL}?subject=${encodeURIComponent(subject)}&body=${body}`;
 
@@ -361,7 +364,7 @@
         }
     }
 
-    // Kamera / Scanner Steuerung
+    // Kamera / Barcode Scanner Steuerung
     function startScanner(inputId) {
         currentTargetInputId = inputId;
         const modal = new bootstrap.Modal(document.getElementById('scannerModal'));
