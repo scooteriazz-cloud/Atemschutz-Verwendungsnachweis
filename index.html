@@ -228,18 +228,11 @@
                 </div>
             </div>
 
-            <!-- ZWEI BUTTONS (ABSENDEN & DRUCKEN) -->
-            <div class="row g-2 mt-4 no-print">
-                <div class="col-md-6">
-                    <button type="button" class="btn btn-primary btn-lg w-100 fw-bold fs-6" onclick="processForm()">
-                        ✉️ Absenden
-                    </button>
-                </div>
-                <div class="col-md-6">
-                    <button type="button" class="btn btn-dark btn-lg w-100 fw-bold fs-6" onclick="printDirectly()">
-                        🖨️ Direkt Drucken
-                    </button>
-                </div>
+            <!-- EINZIGER BUTTON: ABSCHICKEN -->
+            <div class="mt-4 no-print">
+                <button type="button" class="btn btn-primary btn-lg w-100 fw-bold fs-5 py-3" onclick="processForm()">
+                    ✉️ ABSCHICKEN
+                </button>
             </div>
 
         </form>
@@ -311,19 +304,6 @@
             document.getElementById('clear-signature').addEventListener('click', () => signaturePad.clear());
         }
     });
-
-    function printDirectly() {
-        const form = document.getElementById('atemschutzForm');
-        if (!form.checkValidity()) {
-            form.reportValidity();
-            return;
-        }
-        if (signaturePad && signaturePad.isEmpty()) {
-            alert('Bitte leiste eine Unterschrift vor dem Drucken!');
-            return;
-        }
-        window.print();
-    }
 
     async function processForm() {
         const form = document.getElementById('atemschutzForm');
