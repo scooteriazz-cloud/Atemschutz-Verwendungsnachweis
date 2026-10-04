@@ -228,19 +228,14 @@
                 </div>
             </div>
 
-            <!-- DREI BUTTONS -->
+            <!-- ZWEI BUTTONS (ABSENDEN & DRUCKEN) -->
             <div class="row g-2 mt-4 no-print">
-                <div class="col-md-4">
-                    <button type="button" class="btn btn-success btn-lg w-100 fw-bold fs-6" onclick="processForm('whatsapp')">
-                        💬 PDF & WhatsApp
+                <div class="col-md-6">
+                    <button type="button" class="btn btn-primary btn-lg w-100 fw-bold fs-6" onclick="processForm()">
+                        ✉️ Absenden
                     </button>
                 </div>
-                <div class="col-md-4">
-                    <button type="button" class="btn btn-primary btn-lg w-100 fw-bold fs-6" onclick="processForm('email')">
-                        ✉️ PDF & E-Mail
-                    </button>
-                </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <button type="button" class="btn btn-dark btn-lg w-100 fw-bold fs-6" onclick="printDirectly()">
                         🖨️ Direkt Drucken
                     </button>
@@ -277,10 +272,6 @@
     let html5QrCode = null;
     let signaturePad = null;
 
-    // Kontaktdaten
-    const TARGET_PHONE = "4915159870171";
-    const TARGET_EMAIL = "scooteriazz@googlemail.com";
-    
     // Google Sheets Web-App URL
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz0ww2oRsOMFG1IoGND-ZtI1Uv7foUES5KhGKRfa5hDq6_PIz8vzIu-e_82p1_QZTxqOQ/exec";
 
@@ -334,7 +325,7 @@
         window.print();
     }
 
-    async function processForm(method) {
+    async function processForm() {
         const form = document.getElementById('atemschutzForm');
         
         if (!form.checkValidity()) {
@@ -499,11 +490,11 @@
             doc.setTextColor(100, 100, 100);
             doc.text(`Unterschrieben von ${agtName} am ${datumVal}`, 14, currentY + 31);
 
-            // 2. Reine Base64-Zeichenkette ohne Header extrahieren
+            // 2. Base64-PDF extrahieren
             const pdfDataUri = doc.output('datauristring');
             const pdfBase64 = pdfDataUri.split(',')[1];
 
-            // 3. Daten inkl. Base64-PDF an Google Sheets & Apps Script senden
+            // 3. Daten an Google Apps Script senden
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
@@ -528,19 +519,10 @@
                 })
             });
 
-            // 4. PDF lokal auf dem Handy/PC speichern
+            // 4. PDF lokal auf dem Gerät speichern
             doc.save(dateiname);
 
-            if (method === 'whatsapp') {
-                const whatsappText = `Hallo Stefan,%0A%0Aanbei mein Atemschutz-Prüfnachweis.%0A%0A👤 *Geräteträger:* ${encodeURIComponent(agtName)}%0A📅 *Datum:* ${encodeURIComponent(datumVal)}%0A🚒 *Anlass:* ${encodeURIComponent(anlassVal)}%0A%0A_(PDF wurde auf meinem Gerät gespeichert und ist als Anhang beigefügt.)_`;
-                const whatsappUrl = `https://wa.me/${TARGET_PHONE}?text=${whatsappText}`;
-
-                alert('PDF wurde erstellt! WhatsApp öffnet sich jetzt. Bitte füge dort die PDF-Datei als Anhang bei.');
-                window.location.href = whatsappUrl;
-
-            } else if (method === 'email') {
-                alert('Vielen Dank! Die PDF wurde auf deinem Gerät gespeichert. Der Prüfnachweis inkl. PDF-Anhang wurde automatisch an scooteriazz@googlemail.com gesendet und in die Google Tabelle eingetragen.');
-            }
+            alert('Vielen Dank! Der Prüfnachweis wurde erfolgreich übermittelt, in die Tabelle eingetragen und die PDF auf deinem Gerät gespeichert.');
 
         } catch (error) {
             console.error('Fehler:', error);
