@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atemschutz-Verwendungsliste</title>
+    <title>Atemschutz Verwendungs- & Prüfnachweis</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Signature Pad -->
@@ -12,7 +12,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- EmailJS SDK -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <!-- Barcode / QR Scanner -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         body {
             background-color: #f8f9fa;
@@ -36,10 +38,15 @@
             position: relative;
             touch-action: none;
         }
-        canvas {
+        canvas#signature-pad {
             width: 100%;
             height: 180px;
             display: block;
+        }
+        #interactive-scanner {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
         }
         @media print {
             .no-print {
@@ -54,14 +61,15 @@
     <div class="card">
         <div class="header-title text-center">
             <h2 class="mb-1">🚒 Feuerwehr Krugzell</h2>
-            <h4 class="mb-0">Atemschutz-Verwendungsnachweis</h4>
+            <h4 class="mb-0">Atemschutz Verwendungs- & Prüfnachweis</h4>
         </div>
         <div class="card-body p-4">
             <form id="atemschutzForm">
-                <!-- Allgemeine Einsatzdaten -->
+
+                <!-- 1. Allgemeine Angaben -->
                 <h5 class="text-danger border-bottom pb-2 mb-3">1. Allgemeine Angaben</h5>
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label for="anlass" class="form-label fw-bold">Anlass / Grund</label>
                         <select class="form-select" id="anlass" required>
                             <option value="" disabled selected>Bitte wählen...</option>
@@ -71,94 +79,175 @@
                             <option value="Sonstiges">Sonstiges</option>
                         </select>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label for="datum" class="form-label fw-bold">Datum</label>
-                        <input type="date" class="form-select" id="datum" required>
+                        <input type="date" class="form-control" id="datum" required>
                     </div>
-                    <div class="col-12">
+                    <div class="col-md-4">
                         <label for="einsatzort" class="form-label fw-bold">Einsatzort / Übungsobjekt</label>
                         <input type="text" class="form-control" id="einsatzort" placeholder="z. B. Hauptstraße 12 / Feuerwehrhaus" required>
                     </div>
                 </div>
 
-                <!-- Personal -->
+                <!-- 2. Personal -->
                 <h5 class="text-danger border-bottom pb-2 mt-4 mb-3">2. Atemschutzgeräteträger</h5>
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label for="truppfuehrer" class="form-label fw-bold">Truppführer</label>
-                        <select class="form-select" id="truppfuehrer" required>
+                        <label for="agt_name" class="form-label fw-bold">Name des Geräteträgers</label>
+                        <select class="form-select" id="agt_name" required>
                             <option value="" disabled selected>Name auswählen...</option>
-                            <option value="Max Mustermann">Max Mustermann</option>
-                            <option value="Felix Muster">Felix Muster</option>
-                            <option value="Florian Kempten">Florian Kempten</option>
-                            <!-- Hier weitere Namen ergänzen -->
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="truppmann" class="form-label fw-bold">Truppmann</label>
-                        <select class="form-select" id="truppmann" required>
-                            <option value="" disabled selected>Name auswählen...</option>
-                            <option value="Max Mustermann">Max Mustermann</option>
-                            <option value="Felix Muster">Felix Muster</option>
-                            <option value="Florian Kempten">Florian Kempten</option>
-                            <!-- Hier weitere Namen ergänzen -->
+                            <option value="Bader, Oliver">Bader, Oliver</option>
+                            <option value="Bader, Thomas">Bader, Thomas</option>
+                            <option value="Berger, Thomas">Berger, Thomas</option>
+                            <option value="Brauner, Stefan">Brauner, Stefan</option>
+                            <option value="Hafner, Markus">Hafner, Markus</option>
+                            <option value="Hafner, Michael">Hafner, Michael</option>
+                            <option value="Hafner, Stefan">Hafner, Stefan</option>
+                            <option value="Heubuch, Hans-Jörg">Heubuch, Hans-Jörg</option>
+                            <option value="Hiemer, Peter">Hiemer, Peter</option>
+                            <option value="Kiesel, Michael">Kiesel, Michael</option>
+                            <option value="Krattenmacher, Fabian">Krattenmacher, Fabian</option>
+                            <option value="Linortner, Daniel">Linortner, Daniel</option>
+                            <option value="Maier, Simon">Maier, Simon</option>
+                            <option value="Misterek, Tim">Misterek, Tim</option>
+                            <option value="Pflaum, Dieter">Pflaum, Dieter</option>
+                            <option value="Schilling, Christoph">Schilling, Christoph</option>
+                            <option value="Schilling, Florian">Schilling, Florian</option>
+                            <option value="Schleich, Marvin">Schleich, Marvin</option>
+                            <option value="Waldmann, Christoph">Waldmann, Christoph</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Zeiten & Drücke -->
-                <h5 class="text-danger border-bottom pb-2 mt-4 mb-3">3. Zeiten & Flaschendrücke</h5>
+                <!-- 3. Gerätenachweis (Bestand & Tausch) -->
+                <h5 class="text-danger border-bottom pb-2 mt-4 mb-3">3. Gerätenachweis (Bestand & Tausch)</h5>
+                
+                <!-- Bestandsgerät -->
+                <div class="p-3 bg-light rounded border mb-3">
+                    <h6 class="fw-bold text-dark border-bottom pb-1 mb-2">3.1 Bestandsgerät / Verwendetes Gerät</h6>
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Grundträger ID</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="gt_bestand" placeholder="z. B. GT-01" required>
+                                <button class="btn btn-outline-danger no-print" type="button" onclick="startScanner('gt_bestand')">📷</button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Flasche ID & Druck</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="fl_bestand" placeholder="Flasche ID" required>
+                                <button class="btn btn-outline-danger no-print me-1" type="button" onclick="startScanner('fl_bestand')">📷</button>
+                                <input type="number" class="form-control" id="druck_bestand" placeholder="bar" min="0" max="350" required>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Lungenautomat ID</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="la_bestand" placeholder="z. B. LA-01" required>
+                                <button class="btn btn-outline-danger no-print" type="button" onclick="startScanner('la_bestand')">📷</button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Maske ID</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="maske_bestand" placeholder="z. B. M-01" required>
+                                <button class="btn btn-outline-danger no-print" type="button" onclick="startScanner('maske_bestand')">📷</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tauschgerät / Neu verbaut -->
+                <div class="p-3 bg-light rounded border">
+                    <h6 class="fw-bold text-dark border-bottom pb-1 mb-2">3.2 Nach Einsatz neu/getauscht verbaute Komponenten (optional)</h6>
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Grundträger Neu</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="gt_neu" placeholder="z. B. GT-02">
+                                <button class="btn btn-outline-danger no-print" type="button" onclick="startScanner('gt_neu')">📷</button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Flasche Neu ID & Druck</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="fl_neu" placeholder="Flasche ID">
+                                <button class="btn btn-outline-danger no-print me-1" type="button" onclick="startScanner('fl_neu')">📷</button>
+                                <input type="number" class="form-control" id="druck_neu" placeholder="bar" min="0" max="350">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Lungenautomat Neu</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="la_neu" placeholder="z. B. LA-02">
+                                <button class="btn btn-outline-danger no-print" type="button" onclick="startScanner('la_neu')">📷</button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Maske Neu</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="maske_neu" placeholder="z. B. M-02">
+                                <button class="btn btn-outline-danger no-print" type="button" onclick="startScanner('maske_neu')">📷</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal für Barcode Scanner -->
+                <div class="modal fade" id="scannerModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Barcode / QR-Code scannen</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="stopScanner()"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <div id="interactive-scanner"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="stopScanner()">Schließen</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Einsatzkurzprüfung nach FwDV Bayern -->
+                <h5 class="text-danger border-bottom pb-2 mt-4 mb-3">4. Einsatzkurzprüfung (nach FwDV / BayFwG)</h5>
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label for="zeitAnschluss" class="form-label fw-bold">Anschlusszeit (Start)</label>
-                        <input type="time" class="form-control" id="zeitAnschluss" required>
+                        <div class="form-check p-2 border rounded bg-white">
+                            <input class="form-check-input ms-1 me-2" type="checkbox" id="p_sicht" required>
+                            <label class="form-check-label fw-bold" for="p_sicht">1. Sichtprüfung</label>
+                            <div class="small text-muted ms-4">Sauberkeit, Vollständigkeit, Schäden</div>
+                        </div>
                     </div>
                     <div class="col-md-4">
-                        <label for="druckStartTF" class="form-label fw-bold">Druck Start TF (bar)</label>
-                        <input type="number" class="form-control" id="druckStartTF" placeholder="z. B. 300" min="0" max="350" required>
+                        <div class="form-check p-2 border rounded bg-white">
+                            <input class="form-check-input ms-1 me-2" type="checkbox" id="p_dicht" required>
+                            <label class="form-check-label fw-bold" for="p_dicht">2. Dichtprüfung</label>
+                            <div class="small text-muted ms-4">Flaschenventil zu, Druckabfall-Check</div>
+                        </div>
                     </div>
                     <div class="col-md-4">
-                        <label for="druckStartTM" class="form-label fw-bold">Druck Start TM (bar)</label>
-                        <input type="number" class="form-control" id="druckStartTM" placeholder="z. B. 300" min="0" max="350" required>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label for="zeitRückzug" class="form-label fw-bold">Rückzugszeit</label>
-                        <input type="time" class="form-control" id="zeitRückzug">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="druckRückzugTF" class="form-label fw-bold">Druck Rückzug TF (bar)</label>
-                        <input type="number" class="form-control" id="druckRückzugTF" placeholder="z. B. 180" min="0" max="350">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="druckRückzugTM" class="form-label fw-bold">Druck Rückzug TM (bar)</label>
-                        <input type="number" class="form-control" id="druckRückzugTM" placeholder="z. B. 170" min="0" max="350">
-                    </div>
-
-                    <div class="col-md-4">
-                        <label for="zeitEnde" class="form-label fw-bold">Endzeit (Ablegen)</label>
-                        <input type="time" class="form-control" id="zeitEnde" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="druckEndeTF" class="form-label fw-bold">Druck Ende TF (bar)</label>
-                        <input type="number" class="form-control" id="druckEndeTF" placeholder="z. B. 60" min="0" max="350" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="druckEndeTM" class="form-label fw-bold">Druck Ende TM (bar)</label>
-                        <input type="number" class="form-control" id="druckEndeTM" placeholder="z. B. 50" min="0" max="350" required>
+                        <div class="form-check p-2 border rounded bg-white">
+                            <input class="form-check-input ms-1 me-2" type="checkbox" id="p_funktion" required>
+                            <label class="form-check-label fw-bold" for="p_funktion">3. Hochdruck-/Funktionsprüfung</label>
+                            <div class="small text-muted ms-4">Lungenautomat, Warnreinrichtung (Restdruck)</div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Bemerkungen -->
-                <h5 class="text-danger border-bottom pb-2 mt-4 mb-3">4. Bemerkungen / Besonderheiten</h5>
+                <!-- 5. Bemerkungen -->
+                <h5 class="text-danger border-bottom pb-2 mt-4 mb-3">5. Bemerkungen / Mängel</h5>
                 <div class="mb-3">
                     <textarea class="form-control" id="bemerkungen" rows="2" placeholder="Besondere Vorkommnisse, Belastung, Mängel an Geräten..."></textarea>
                 </div>
 
-                <!-- Digitale Unterschrift -->
-                <h5 class="text-danger border-bottom pb-2 mt-4 mb-3">5. Bestätigung & Unterschrift</h5>
+                <!-- 6. Digitale Unterschrift -->
+                <h5 class="text-danger border-bottom pb-2 mt-4 mb-3">6. Bestätigung & Unterschrift</h5>
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Unterschrift (Truppführer / Atemschutzüberwachung)</label>
+                    <label class="form-label fw-bold">Unterschrift (Geräteträger / Prüfer)</label>
                     <div class="signature-container">
                         <canvas id="signature-pad"></canvas>
                     </div>
@@ -180,100 +269,134 @@
     </div>
 </div>
 
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
-    // 1. Datum auf heute vorbelegen
-    document.getElementById('datum').valueAsDate = new Date();
+    let currentTargetInputId = null;
+    let html5QrCode = null;
 
-    // 2. EmailJS Initialisierung
-    // WICHTIG: Ersetze 'YOUR_PUBLIC_KEY' durch deinen echten EmailJS Public Key
-    (function() {
-        emailjs.init("YOUR_PUBLIC_KEY");
-    })();
+    document.addEventListener("DOMContentLoaded", function() {
+        // Datum vorbelegen
+        const datumInput = document.getElementById('datum');
+        if (datumInput) datumInput.valueAsDate = new Date();
 
-    // 3. Signature Pad Setup & Canvas Scaling
-    const canvas = document.getElementById('signature-pad');
-    const signaturePad = new SignaturePad(canvas, {
-        backgroundColor: 'rgb(255, 255, 255)'
+        // EmailJS Init
+        if (typeof emailjs !== 'undefined') {
+            emailjs.init("YOUR_PUBLIC_KEY");
+        }
+
+        // Signature Pad Init
+        const canvas = document.getElementById('signature-pad');
+        let signaturePad = null;
+
+        if (canvas && typeof SignaturePad !== 'undefined') {
+            signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
+
+            function resizeCanvas() {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                canvas.width = canvas.offsetWidth * ratio;
+                canvas.height = canvas.offsetHeight * ratio;
+                canvas.getContext("2d").scale(ratio, ratio);
+                signaturePad.clear();
+            }
+
+            window.addEventListener("resize", resizeCanvas);
+            resizeCanvas();
+
+            document.getElementById('clear-signature').addEventListener('click', () => signaturePad.clear());
+        }
+
+        // Formularverarbeitung
+        const form = document.getElementById('atemschutzForm');
+        if (form) {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                if (signaturePad && signaturePad.isEmpty()) {
+                    alert('Bitte leiste eine Unterschrift vor dem Absenden!');
+                    return;
+                }
+
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Erstelle PDF...';
+
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const formElement = document.getElementById('form-container');
+
+                    const canvasImage = await html2canvas(formElement, {
+                        scale: 2,
+                        useCORS: true,
+                        ignoreElements: (element) => element.classList.contains('no-print')
+                    });
+
+                    const imgData = canvasImage.toDataURL('image/png');
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const imgWidth = 210;
+                    const imgHeight = (canvasImage.height * imgWidth) / canvasImage.width;
+
+                    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                    const pdfBase64 = pdf.output('datauristring');
+
+                    const emailParams = {
+                        anlass: document.getElementById('anlass').value,
+                        datum: document.getElementById('datum').value,
+                        einsatzort: document.getElementById('einsatzort').value,
+                        agt_name: document.getElementById('agt_name').value,
+                        gt_bestand: document.getElementById('gt_bestand').value,
+                        fl_bestand: document.getElementById('fl_bestand').value,
+                        bemerkungen: document.getElementById('bemerkungen').value || 'Keine',
+                        pdf_attachment: pdfBase64
+                    };
+
+                    if (typeof emailjs !== 'undefined') {
+                        await emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', emailParams);
+                        alert('Prüfnachweis erfolgreich übermittelt!');
+                    }
+
+                    pdf.save(`Atemschutz_Pruefung_${document.getElementById('datum').value}_${document.getElementById('agt_name').value}.pdf`);
+
+                } catch (error) {
+                    console.error('Fehler:', error);
+                    alert('Hinweis / Fehler: ' + error.message);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '📄 PDF erstellen & per E-Mail senden';
+                }
+            });
+        }
     });
 
-    function resizeCanvas() {
-        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        canvas.width = canvas.offsetWidth * ratio;
-        canvas.height = canvas.offsetHeight * ratio;
-        canvas.getContext("2d").scale(ratio, ratio);
-        signaturePad.clear();
+    // Barcode Scanner Kamera Steuerung
+    function startScanner(inputId) {
+        currentTargetInputId = inputId;
+        const modal = new bootstrap.Modal(document.getElementById('scannerModal'));
+        modal.show();
+
+        html5QrCode = new Html5Qrcode("interactive-scanner");
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            { fps: 10, qrbox: { width: 250, height: 150 } },
+            (decodedText) => {
+                document.getElementById(currentTargetInputId).value = decodedText;
+                stopScanner();
+                modal.hide();
+            },
+            (errorMessage) => { /* Fehler beim Dekodieren ignorieren */ }
+        ).catch(err => {
+            alert("Kamerazugriff fehlgeschlagen: " + err);
+        });
     }
 
-    window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
-
-    document.getElementById('clear-signature').addEventListener('click', () => {
-        signaturePad.clear();
-    });
-
-    // 4. Formularübermittlung & PDF-Generierung + E-Mail
-    document.getElementById('atemschutzForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        if (signaturePad.isEmpty()) {
-            alert('Bitte leiste eine Unterschrift vor dem Absenden!');
-            return;
+    function stopScanner() {
+        if (html5QrCode) {
+            html5QrCode.stop().then(() => {
+                html5QrCode.clear();
+            }).catch(err => console.error(err));
         }
-
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Erstelle PDF & sende E-Mail...';
-
-        try {
-            // PDF aus dem Formularbereich generieren
-            const { jsPDF } = window.jspdf;
-            const formElement = document.getElementById('form-container');
-
-            const canvasImage = await html2canvas(formElement, {
-                scale: 2,
-                useCORS: true,
-                ignoreElements: (element) => element.classList.contains('no-print')
-            });
-
-            const imgData = canvasImage.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const imgWidth = 210; // A4 Breite in mm
-            const pageHeight = 295; // A4 Höhe in mm
-            const imgHeight = (canvasImage.height * imgWidth) / canvasImage.width;
-
-            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-            const pdfBase64 = pdf.output('datauristring'); // Base64 Data URL für EmailJS
-
-            // Formulardaten für die E-Mail-Vorlage sammeln
-            const emailParams = {
-                anlass: document.getElementById('anlass').value,
-                datum: document.getElementById('datum').value,
-                einsatzort: document.getElementById('einsatzort').value,
-                truppfuehrer: document.getElementById('truppfuehrer').value,
-                truppmann: document.getElementById('truppmann').value,
-                zeit_start: document.getElementById('zeitAnschluss').value,
-                zeit_ende: document.getElementById('zeitEnde').value,
-                bemerkungen: document.getElementById('bemerkungen').value || 'Keine',
-                pdf_attachment: pdfBase64 // Optional für Vorlagen mit Attachment-Unterstützung
-            };
-
-            // E-Mail via EmailJS versenden
-            // WICHTIG: Ersetze 'YOUR_SERVICE_ID' und 'YOUR_TEMPLATE_ID'
-            await emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', emailParams);
-
-            alert('Atemschutz-Verwendungsliste erfolgreich als PDF generiert und per E-Mail versendet!');
-            
-            // Optional: PDF direkt im Browser herunterladen
-            pdf.save(`Atemschutz_${document.getElementById('datum').value}_${document.getElementById('truppfuehrer').value}.pdf`);
-
-        } catch (error) {
-            console.error('Fehler beim Erstellen/Versenden:', error);
-            alert('Fehler beim Versenden der E-Mail: ' + JSON.stringify(error));
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '📄 PDF erstellen & per E-Mail senden';
-        }
-    });
+    }
 </script>
 
 </body>
