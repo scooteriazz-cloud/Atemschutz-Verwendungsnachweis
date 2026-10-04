@@ -281,8 +281,8 @@
     const TARGET_PHONE = "4915159870171";
     const TARGET_EMAIL = "scooteriazz@googlemail.com";
     
-    // Falls du Google Sheets nutzt, füge hier deine Web-App URL ein:
-    const GOOGLE_SCRIPT_URL = ""; 
+    // Google Sheets Web-App URL
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz0ww2oRsOMFG1IoGND-ZtI1Uv7foUES5KhGKRfa5hDq6_PIz8vzIu-e_82p1_QZTxqOQ/exec";
 
     function toggleCustomNameInput() {
         const select = document.getElementById('agt_select');
@@ -299,11 +299,9 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-        // Datum auf heute setzen
         const datumInput = document.getElementById('datum');
         if (datumInput) datumInput.valueAsDate = new Date();
 
-        // Unterschriftenfeld initialisieren
         const canvas = document.getElementById('signature-pad');
         if (canvas && typeof SignaturePad !== 'undefined') {
             signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
@@ -323,7 +321,6 @@
         }
     });
 
-    // Direkt-Drucken Funktion
     function printDirectly() {
         const form = document.getElementById('atemschutzForm');
         if (!form.checkValidity()) {
@@ -337,7 +334,6 @@
         window.print();
     }
 
-    // Vektorbasierte PDF-Generierung & Datenverarbeitung
     async function processForm(method) {
         const form = document.getElementById('atemschutzForm');
         
@@ -381,41 +377,39 @@
 
         const dateiname = `Atemschutz_Pruefung_${datumVal}_${agtName.replace(/\s+/g, '_')}.pdf`;
 
-        // Optional: An Google Sheets senden, falls URL eingetragen ist
-        if (GOOGLE_SCRIPT_URL !== "") {
-            try {
-                fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        datum: datumVal,
-                        anlass: anlassVal,
-                        einsatzort: einsatzortVal,
-                        agtName: agtName,
-                        gtBestand: gtBestand,
-                        flBestand: flBestand,
-                        druckBestand: druckBestand,
-                        laBestand: laBestand,
-                        maskeBestand: maskeBestand,
-                        gtNeu: gtNeu,
-                        flNeu: flNeu,
-                        druckNeu: druckNeu,
-                        laNeu: laNeu,
-                        maskeNeu: maskeNeu,
-                        bemerkungen: bemerkungenVal
-                    })
-                });
-            } catch (err) {
-                console.error('Fehler beim Google Sheets Übertrag:', err);
-            }
+        // 1. Daten an Google Sheets senden & automatische E-Mail auslösen
+        try {
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    datum: datumVal,
+                    anlass: anlassVal,
+                    einsatzort: einsatzortVal,
+                    agtName: agtName,
+                    gtBestand: gtBestand,
+                    flBestand: flBestand,
+                    druckBestand: druckBestand,
+                    laBestand: laBestand,
+                    maskeBestand: maskeBestand,
+                    gtNeu: gtNeu,
+                    flNeu: flNeu,
+                    druckNeu: druckNeu,
+                    laNeu: laNeu,
+                    maskeNeu: maskeNeu,
+                    bemerkungen: bemerkungenVal
+                })
+            });
+        } catch (err) {
+            console.error('Fehler beim Übertragen an Google Sheets:', err);
         }
 
+        // 2. Vektor-PDF lokal für den Kameraden generieren
         try {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
 
-            // Kopfzeile & Akzentbalken
             doc.setFillColor(220, 53, 69);
             doc.rect(14, 12, 182, 3, 'F');
 
@@ -432,7 +426,6 @@
             doc.setDrawColor(200, 200, 200);
             doc.line(14, 33, 196, 33);
 
-            // 1. Stammdaten
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(220, 53, 69);
@@ -444,7 +437,6 @@
             doc.text(`Datum: ${datumVal}`, 80, 47);
             doc.text(`Ort / Objekt: ${einsatzortVal}`, 140, 47);
 
-            // 2. Geräteträger
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(220, 53, 69);
             doc.text('2. Atemschutzgeräteträger', 14, 56);
@@ -453,7 +445,6 @@
             doc.setTextColor(40, 40, 40);
             doc.text(`Name, Vorname: ${agtName}`, 14, 63);
 
-            // 3. Gerätenachweis (Reine Vektor-Tabelle)
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(220, 53, 69);
             doc.text('3. Gerätenachweis', 14, 72);
@@ -499,7 +490,6 @@
 
             let currentY = tableY + 8;
 
-            // 4. Einsatzkurzprüfung
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(10);
             doc.setTextColor(220, 53, 69);
@@ -511,7 +501,6 @@
 
             currentY += 14;
 
-            // 5. Bemerkungen
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(220, 53, 69);
             doc.text('5. Bemerkungen / Mängel', 14, currentY);
@@ -523,7 +512,6 @@
 
             currentY += 8 + (splitBemerkungen.length * 5);
 
-            // 6. Unterschrift
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(220, 53, 69);
             doc.text('6. Unterschrift des Geräteträgers', 14, currentY);
@@ -539,10 +527,8 @@
             doc.setTextColor(100, 100, 100);
             doc.text(`Unterschrieben von ${agtName} am ${datumVal}`, 14, currentY + 31);
 
-            // PDF lokal speichern
             doc.save(dateiname);
 
-            // Versenden ausführen
             if (method === 'whatsapp') {
                 const whatsappText = `Hallo Stefan,%0A%0Aanbei mein Atemschutz-Prüfnachweis.%0A%0A👤 *Geräteträger:* ${encodeURIComponent(agtName)}%0A📅 *Datum:* ${encodeURIComponent(datumVal)}%0A🚒 *Anlass:* ${encodeURIComponent(anlassVal)}%0A%0A_(PDF wurde auf meinem Gerät gespeichert und ist als Anhang beigefügt.)_`;
                 const whatsappUrl = `https://wa.me/${TARGET_PHONE}?text=${whatsappText}`;
@@ -551,13 +537,7 @@
                 window.location.href = whatsappUrl;
 
             } else if (method === 'email') {
-                const subject = `Atemschutz-Prüfnachweis: ${agtName} (${datumVal})`;
-                const body = `Hallo Stefan,%0A%0Aanbei übermittle ich dir meinen Atemschutz-Prüfnachweis.%0A%0AGeräteträger: ${agtName}%0ADatum: ${datumVal}%0AAnlass: ${anlassVal}%0A%0AHinweis: Die erstellte PDF-Datei befindet sich in meinen Downloads und ist dieser Mail als Anhang beigefügt.%0A%0AViele Grüße`;
-                
-                const mailtoUrl = `mailto:${TARGET_EMAIL}?subject=${encodeURIComponent(subject)}&body=${body}`;
-
-                alert('PDF wurde erstellt! Dein E-Mail-Programm öffnet sich jetzt. Bitte füge dort die heruntergeladene PDF-Datei als Anhang ein.');
-                window.location.href = mailtoUrl;
+                alert('Vielen Dank! Die PDF wurde auf deinem Gerät gespeichert. Der Prüfnachweis wurde automatisch in die Google Tabelle eingetragen und eine Benachrichtigung an scooteriazz@googlemail.com versendet.');
             }
 
         } catch (error) {
@@ -566,7 +546,6 @@
         }
     }
 
-    // Kamera / Barcode Scanner Steuerung
     function startScanner(inputId) {
         currentTargetInputId = inputId;
         const modal = new bootstrap.Modal(document.getElementById('scannerModal'));
