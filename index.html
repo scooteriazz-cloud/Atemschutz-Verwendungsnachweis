@@ -237,7 +237,7 @@
                 </div>
                 <div class="col-md-4">
                     <button type="button" class="btn btn-primary btn-lg w-100 fw-bold fs-6" onclick="processForm('email')">
-                        ✉️️ PDF & E-Mail
+                        ✉️ PDF & E-Mail
                     </button>
                 </div>
                 <div class="col-md-4">
@@ -279,7 +279,10 @@
 
     // Kontaktdaten
     const TARGET_PHONE = "4915159870171";
-    const TARGET_EMAIL = "stefan.brauner@g4more.de";
+    const TARGET_EMAIL = "scooteriazz@googlemail.com";
+    
+    // Falls du Google Sheets nutzt, füge hier deine Web-App URL ein:
+    const GOOGLE_SCRIPT_URL = ""; 
 
     function toggleCustomNameInput() {
         const select = document.getElementById('agt_select');
@@ -334,7 +337,7 @@
         window.print();
     }
 
-    // 100% Vektorbasierte PDF-Generierung (Völlig unabhängig von Handydisplay oder Screenshot)
+    // Vektorbasierte PDF-Generierung & Datenverarbeitung
     async function processForm(method) {
         const form = document.getElementById('atemschutzForm');
         
@@ -364,11 +367,53 @@
         const einsatzortVal = document.getElementById('einsatzort').value || '-';
         const bemerkungenVal = document.getElementById('bemerkungen').value || 'Keine Besonderheiten / Mängel';
 
+        const gtBestand = document.getElementById('gt_bestand').value || '-';
+        const flBestand = document.getElementById('fl_bestand').value || '-';
+        const druckBestand = document.getElementById('druck_bestand').value ? `${document.getElementById('druck_bestand').value} bar` : '-';
+        const laBestand = document.getElementById('la_bestand').value || '-';
+        const maskeBestand = document.getElementById('maske_bestand').value || '-';
+
+        const gtNeu = document.getElementById('gt_neu').value || '-';
+        const flNeu = document.getElementById('fl_neu').value || '-';
+        const druckNeu = document.getElementById('druck_neu').value ? `${document.getElementById('druck_neu').value} bar` : '-';
+        const laNeu = document.getElementById('la_neu').value || '-';
+        const maskeNeu = document.getElementById('maske_neu').value || '-';
+
         const dateiname = `Atemschutz_Pruefung_${datumVal}_${agtName.replace(/\s+/g, '_')}.pdf`;
+
+        // Optional: An Google Sheets senden, falls URL eingetragen ist
+        if (GOOGLE_SCRIPT_URL !== "") {
+            try {
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        datum: datumVal,
+                        anlass: anlassVal,
+                        einsatzort: einsatzortVal,
+                        agtName: agtName,
+                        gtBestand: gtBestand,
+                        flBestand: flBestand,
+                        druckBestand: druckBestand,
+                        laBestand: laBestand,
+                        maskeBestand: maskeBestand,
+                        gtNeu: gtNeu,
+                        flNeu: flNeu,
+                        druckNeu: druckNeu,
+                        laNeu: laNeu,
+                        maskeNeu: maskeNeu,
+                        bemerkungen: bemerkungenVal
+                    })
+                });
+            } catch (err) {
+                console.error('Fehler beim Google Sheets Übertrag:', err);
+            }
+        }
 
         try {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4'); // A4: 210 x 297 mm
+            const doc = new jsPDF('p', 'mm', 'a4');
 
             // Kopfzeile & Akzentbalken
             doc.setFillColor(220, 53, 69);
@@ -412,18 +457,6 @@
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(220, 53, 69);
             doc.text('3. Gerätenachweis', 14, 72);
-
-            const gtBestand = document.getElementById('gt_bestand').value || '-';
-            const flBestand = document.getElementById('fl_bestand').value || '-';
-            const druckBestand = document.getElementById('druck_bestand').value ? `${document.getElementById('druck_bestand').value} bar` : '-';
-            const laBestand = document.getElementById('la_bestand').value || '-';
-            const maskeBestand = document.getElementById('maske_bestand').value || '-';
-
-            const gtNeu = document.getElementById('gt_neu').value || '-';
-            const flNeu = document.getElementById('fl_neu').value || '-';
-            const druckNeu = document.getElementById('druck_neu').value ? `${document.getElementById('druck_neu').value} bar` : '-';
-            const laNeu = document.getElementById('la_neu').value || '-';
-            const maskeNeu = document.getElementById('maske_neu').value || '-';
 
             let tableY = 77;
             doc.setFillColor(220, 53, 69);
