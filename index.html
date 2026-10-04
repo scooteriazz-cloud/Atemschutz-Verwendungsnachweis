@@ -302,7 +302,7 @@
         }
     });
 
-    // Hauptfunktion zum Erstellen & Versenden
+    // Hauptfunktion zum Erstellen & Versenden mit mobiler A4-Skalierung
     async function processForm(method) {
         const form = document.getElementById('atemschutzForm');
         
@@ -335,22 +335,25 @@
         const dateiname = `Atemschutz_Pruefung_${datumVal}_${agtName.replace(/\s+/g, '_')}.pdf`;
 
         try {
-            // PDF generieren
             const { jsPDF } = window.jspdf;
             const formElement = document.getElementById('form-container');
 
+            // Optimierte html2canvas Einstellungen zur Vermeidung von Abschneiden auf Mobilgeräten
             const canvasImage = await html2canvas(formElement, {
                 scale: 2,
                 useCORS: true,
+                windowWidth: 800, // Rendert das Formular in fester Desktop-Breite für A4
                 ignoreElements: (element) => element.classList.contains('no-print')
             });
 
             const imgData = canvasImage.toDataURL('image/png');
             const pdf = new jsPDF('p', 'mm', 'a4');
-            const imgWidth = 210;
-            const imgHeight = (canvasImage.height * imgWidth) / canvasImage.width;
+            
+            const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
+            const pdfHeight = (canvasImage.height * pdfWidth) / canvasImage.width;
 
-            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+            // Bild exakt auf A4 einpassen
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
             // 1. PDF auf Gerät speichern
             pdf.save(dateiname);
