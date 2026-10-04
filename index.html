@@ -66,8 +66,8 @@
                 <div class="col-md-4">
                     <label for="anlass" class="form-label fw-bold">Anlass</label>
                     <select class="form-select" id="anlass" required>
-                        <option value="Einsatz">Einsatz</option>
                         <option value="Übung">Übung</option>
+                        <option value="Einsatz">Einsatz</option>
                         <option value="Atemschutzzentrum">Atemschutzzentrum</option>
                         <option value="Sonstiges">Sonstiges</option>
                     </select>
@@ -82,11 +82,22 @@
                 </div>
             </div>
 
-            <!-- 2. Angaben zum Geräteträger -->
+            <!-- 2. Angaben zum Geräteträger mit Dropdown -->
             <h5 class="section-header mt-4">2. Atemschutzgeräteträger</h5>
             <div class="mb-3">
-                <label for="agt_name" class="form-label fw-bold">Name, Vorname des Geräteträgers</label>
-                <input type="text" class="form-control" id="agt_name" placeholder="Name eintragen" required>
+                <label for="agt_select" class="form-label fw-bold">Geräteträger auswählen</label>
+                <select class="form-select" id="agt_select" required onchange="toggleCustomNameInput()">
+                    <option value="" selected disabled>-- Bitte Namen auswählen --</option>
+                    <option value="Stefan Brauner">Stefan Brauner</option>
+                    <option value="Kamerad 1">Kamerad 1</option>
+                    <option value="Kamerad 2">Kamerad 2</option>
+                    <option value="Kamerad 3">Kamerad 3</option>
+                    <option value="MANUAL">-- Sonstiger / Externer Name --</option>
+                </select>
+            </div>
+            <div class="mb-3 d-none" id="custom_name_div">
+                <label for="agt_custom" class="form-label fw-bold">Name, Vorname (manuell)</label>
+                <input type="text" class="form-control" id="agt_custom" placeholder="Name manuell eintragen">
             </div>
 
             <!-- 3. Gerätenachweis -->
@@ -129,7 +140,7 @@
             </div>
 
             <!-- 3.2 Neues / Getauschtes Gerät -->
-            <h6 class="fw-bold text-secondary mt-4">3.2 Neues / Getauschtes Gerät (Tausch nach Einsatz)</h6>
+            <h6 class="fw-bold text-secondary mt-4">3.2 Neues / Getauschtes Gerät (Tausch nach Einsatz/Übung)</h6>
             <div class="row g-3 mb-2">
                 <div class="col-md-6">
                     <label class="form-label">Grundträger ID (Neu)</label>
@@ -188,11 +199,18 @@
                 </div>
             </div>
 
-            <!-- Submit Button -->
-            <div class="text-center mt-4 no-print">
-                <button type="submit" id="submitBtn" class="btn btn-primary btn-lg w-100">
-                    📥 PDF generieren & auf Gerät speichern
-                </button>
+            <!-- Zwei Sende-Buttons -->
+            <div class="row g-2 mt-4 no-print">
+                <div class="col-md-6">
+                    <button type="button" class="btn btn-success btn-lg w-100" onclick="processForm('whatsapp')">
+                        💬 PDF & WhatsApp senden
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    <button type="button" class="btn btn-primary btn-lg w-100" onclick="processForm('email')">
+                        ✉️ PDF & Per E-Mail senden
+                    </button>
+                </div>
             </div>
 
         </form>
@@ -225,8 +243,26 @@
     let html5QrCode = null;
     let signaturePad = null;
 
+    // Ziel-Kontakte
+    const TARGET_PHONE = "4915159870171";
+    const TARGET_EMAIL = "stefan.brauner@g4more.de";
+
+    function toggleCustomNameInput() {
+        const select = document.getElementById('agt_select');
+        const customDiv = document.getElementById('custom_name_div');
+        const customInput = document.getElementById('agt_custom');
+
+        if (select.value === 'MANUAL') {
+            customDiv.classList.remove('d-none');
+            customInput.required = true;
+        } else {
+            customDiv.classList.add('d-none');
+            customInput.required = false;
+        }
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
-        // Datum automatisch auf heute setzen
+        // Datum vorbelegen
         const datumInput = document.getElementById('datum');
         if (datumInput) datumInput.valueAsDate = new Date();
 
@@ -248,61 +284,82 @@
 
             document.getElementById('clear-signature').addEventListener('click', () => signaturePad.clear());
         }
-
-        // Formularverarbeitung: Nur lokaler PDF-Download
-        const form = document.getElementById('atemschutzForm');
-        if (form) {
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault();
-
-                if (signaturePad && signaturePad.isEmpty()) {
-                    alert('Bitte leiste eine Unterschrift vor dem Erstellen der PDF!');
-                    return;
-                }
-
-                const submitBtn = document.getElementById('submitBtn');
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generiere PDF...';
-
-                try {
-                    const { jsPDF } = window.jspdf;
-                    const formElement = document.getElementById('form-container');
-
-                    // Formular als hochauflösendes Bild rendern
-                    const canvasImage = await html2canvas(formElement, {
-                        scale: 2,
-                        useCORS: true,
-                        ignoreElements: (element) => element.classList.contains('no-print')
-                    });
-
-                    const imgData = canvasImage.toDataURL('image/png');
-                    const pdf = new jsPDF('p', 'mm', 'a4');
-                    const imgWidth = 210;
-                    const imgHeight = (canvasImage.height * imgWidth) / canvasImage.width;
-
-                    // Bild auf PDF-Seite einfügen
-                    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-
-                    // Dateiname erzeugen
-                    const datumVal = document.getElementById('datum').value || 'Unbekannt';
-                    const nameVal = document.getElementById('agt_name').value || 'Geraetetraeger';
-                    const dateiname = `Atemschutz_Pruefung_${datumVal}_${nameVal.replace(/\s+/g, '_')}.pdf`;
-
-                    // PDF herunterladen
-                    pdf.save(dateiname);
-
-                    alert('PDF wurde erfolgreich erstellt und auf deinem Gerät gespeichert! Du kannst sie jetzt an den Leiter Atemschutz weiterleiten.');
-
-                } catch (error) {
-                    console.error('Fehler beim Generieren der PDF:', error);
-                    alert('Fehler beim Erstellen der PDF: ' + error.message);
-                } finally {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '📥 PDF generieren & auf Gerät speichern';
-                }
-            });
-        }
     });
+
+    // Hauptfunktion zur Verarbeitung (WhatsApp oder E-Mail)
+    async function processForm(method) {
+        const form = document.getElementById('atemschutzForm');
+        
+        // Formular-Validierung erzwingen
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        if (signaturePad && signaturePad.isEmpty()) {
+            alert('Bitte leiste eine Unterschrift vor dem Absenden!');
+            return;
+        }
+
+        // Name ermitteln
+        const selectVal = document.getElementById('agt_select').value;
+        let agtName = selectVal;
+        if (selectVal === 'MANUAL') {
+            agtName = document.getElementById('agt_custom').value;
+        }
+
+        if (!agtName) {
+            alert('Bitte wähle einen Geräteträger aus!');
+            return;
+        }
+
+        const datumVal = document.getElementById('datum').value || 'Unbekannt';
+        const anlassVal = document.getElementById('anlass').value || 'Einsatz/Übung';
+        const dateiname = `Atemschutz_Pruefung_${datumVal}_${agtName.replace(/\s+/g, '_')}.pdf`;
+
+        try {
+            // PDF generieren
+            const { jsPDF } = window.jspdf;
+            const formElement = document.getElementById('form-container');
+
+            const canvasImage = await html2canvas(formElement, {
+                scale: 2,
+                useCORS: true,
+                ignoreElements: (element) => element.classList.contains('no-print')
+            });
+
+            const imgData = canvasImage.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgWidth = 210;
+            const imgHeight = (canvasImage.height * imgWidth) / canvasImage.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+
+            // 1. PDF auf Gerät speichern
+            pdf.save(dateiname);
+
+            if (method === 'whatsapp') {
+                const whatsappText = `Hallo Stefan,%0A%0Aanbei mein Atemschutz-Prüfnachweis.%0A%0A👤 *Geräteträger:* ${encodeURIComponent(agtName)}%0A📅 *Datum:* ${encodeURIComponent(datumVal)}%0A🚒 *Anlass:* ${encodeURIComponent(anlassVal)}%0A%0A_(PDF wurde auf meinem Gerät gespeichert und ist als Anhang beigefügt.)_`;
+                const whatsappUrl = `https://wa.me/${TARGET_PHONE}?text=${whatsappText}`;
+
+                alert('PDF wurde gespeichert! WhatsApp öffnet sich jetzt. Bitte füge die PDF-Datei dort als Anhang bei.');
+                window.location.href = whatsappUrl;
+
+            } else if (method === 'email') {
+                const subject = `Atemschutz-Prüfnachweis: ${agtName} (${datumVal})`;
+                const body = `Hallo Stefan,%0A%0Aanbei übermittle ich dir meinen Atemschutz-Prüfnachweis.%0A%0AGeräteträger: ${agtName}%0ADatum: ${datumVal}%0AAnlass: ${anlassVal}%0A%0AHinweis: Die erstellte PDF-Datei befindet sich in meinen Downloads. Ich habe sie dieser Mail als Anhang beigefügt.%0A%0AViele Grüße`;
+                
+                const mailtoUrl = `mailto:${TARGET_EMAIL}?subject=${encodeURIComponent(subject)}&body=${body}`;
+
+                alert('PDF wurde gespeichert! Dein E-Mail-Programm öffnet sich jetzt. Bitte füge dort die heruntergeladene PDF-Datei als Anhang ein.');
+                window.location.href = mailtoUrl;
+            }
+
+        } catch (error) {
+            console.error('Fehler:', error);
+            alert('Fehler beim Erstellen der PDF: ' + error.message);
+        }
+    }
 
     // Kamera / Scanner Steuerung
     function startScanner(inputId) {
