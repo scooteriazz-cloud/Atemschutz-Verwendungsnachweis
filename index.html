@@ -377,36 +377,8 @@
 
         const dateiname = `Atemschutz_Pruefung_${datumVal}_${agtName.replace(/\s+/g, '_')}.pdf`;
 
-        // 1. Daten an Google Sheets senden & automatische E-Mail auslösen
         try {
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    datum: datumVal,
-                    anlass: anlassVal,
-                    einsatzort: einsatzortVal,
-                    agtName: agtName,
-                    gtBestand: gtBestand,
-                    flBestand: flBestand,
-                    druckBestand: druckBestand,
-                    laBestand: laBestand,
-                    maskeBestand: maskeBestand,
-                    gtNeu: gtNeu,
-                    flNeu: flNeu,
-                    druckNeu: druckNeu,
-                    laNeu: laNeu,
-                    maskeNeu: maskeNeu,
-                    bemerkungen: bemerkungenVal
-                })
-            });
-        } catch (err) {
-            console.error('Fehler beim Übertragen an Google Sheets:', err);
-        }
-
-        // 2. Vektor-PDF lokal für den Kameraden generieren
-        try {
+            // 1. PDF zuerst im Speicher als Vektor aufbauen
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
 
@@ -527,6 +499,35 @@
             doc.setTextColor(100, 100, 100);
             doc.text(`Unterschrieben von ${agtName} am ${datumVal}`, 14, currentY + 31);
 
+            // 2. PDF als Base64-String auslesen für den E-Mail-Anhang
+            const pdfBase64 = doc.output('base64');
+
+            // 3. Formulardaten UND PDF-Base64 an Google Sheets senden
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    datum: datumVal,
+                    anlass: anlassVal,
+                    einsatzort: einsatzortVal,
+                    agtName: agtName,
+                    gtBestand: gtBestand,
+                    flBestand: flBestand,
+                    druckBestand: druckBestand,
+                    laBestand: laBestand,
+                    maskeBestand: maskeBestand,
+                    gtNeu: gtNeu,
+                    flNeu: flNeu,
+                    druckNeu: druckNeu,
+                    laNeu: laNeu,
+                    maskeNeu: maskeNeu,
+                    bemerkungen: bemerkungenVal,
+                    pdfBase64: pdfBase64
+                })
+            });
+
+            // 4. PDF lokal auf dem Gerät speichern
             doc.save(dateiname);
 
             if (method === 'whatsapp') {
@@ -537,7 +538,7 @@
                 window.location.href = whatsappUrl;
 
             } else if (method === 'email') {
-                alert('Vielen Dank! Die PDF wurde auf deinem Gerät gespeichert. Der Prüfnachweis wurde automatisch in die Google Tabelle eingetragen und eine Benachrichtigung an scooteriazz@googlemail.com versendet.');
+                alert('Vielen Dank! Die PDF wurde auf deinem Gerät gespeichert. Der Prüfnachweis inkl. PDF-Anhang wurde automatisch an scooteriazz@googlemail.com gesendet und in die Google Tabelle eingetragen.');
             }
 
         } catch (error) {
