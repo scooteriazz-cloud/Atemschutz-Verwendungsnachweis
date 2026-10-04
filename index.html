@@ -45,6 +45,22 @@
             max-width: 400px;
             margin: 0 auto;
         }
+
+        /* Druck-Anpassungen (Versteckt Knöpfe & Ränder beim Ausdrucken) */
+        @media print {
+            body {
+                background-color: #fff !important;
+            }
+            .form-container {
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                max-width: 100% !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -214,16 +230,21 @@
                 </div>
             </div>
 
-            <!-- ZWEI SEPARATE BUTTONS -->
+            <!-- DREI BUTTONS -->
             <div class="row g-2 mt-4 no-print">
-                <div class="col-md-6">
-                    <button type="button" class="btn btn-success btn-lg w-100 fw-bold" onclick="processForm('whatsapp')">
-                        💬 PDF & per WhatsApp senden
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-success btn-lg w-100 fw-bold fs-6" onclick="processForm('whatsapp')">
+                        💬 PDF & WhatsApp
                     </button>
                 </div>
-                <div class="col-md-6">
-                    <button type="button" class="btn btn-primary btn-lg w-100 fw-bold" onclick="processForm('email')">
-                        ✉️ PDF & per E-Mail senden
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-primary btn-lg w-100 fw-bold fs-6" onclick="processForm('email')">
+                        ✉️ PDF & E-Mail
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-dark btn-lg w-100 fw-bold fs-6" onclick="printDirectly()">
+                        🖨️ Direkt Drucken
                     </button>
                 </div>
             </div>
@@ -302,7 +323,21 @@
         }
     });
 
-    // Hauptfunktion zum Erstellen & Versenden mit mobiler A4-Skalierung
+    // Direkt-Drucken Funktion für WLAN-Drucker im Feuerwehrhaus
+    function printDirectly() {
+        const form = document.getElementById('atemschutzForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+        if (signaturePad && signaturePad.isEmpty()) {
+            alert('Bitte leiste eine Unterschrift vor dem Drucken!');
+            return;
+        }
+        window.print();
+    }
+
+    // Hauptfunktion zum Erstellen & Versenden
     async function processForm(method) {
         const form = document.getElementById('atemschutzForm');
         
