@@ -10,7 +10,6 @@
     
     <!-- External JS Libraries for PDF & Scanner -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
@@ -238,7 +237,7 @@
                 </div>
                 <div class="col-md-4">
                     <button type="button" class="btn btn-primary btn-lg w-100 fw-bold fs-6" onclick="processForm('email')">
-                        ✉️ PDF & E-Mail
+                        ✉️️ PDF & E-Mail
                     </button>
                 </div>
                 <div class="col-md-4">
@@ -335,7 +334,7 @@
         window.print();
     }
 
-    // Präzise Vektor-PDF-Generierung (Kein Abschneiden mehr!)
+    // 100% Vektorbasierte PDF-Generierung (Völlig unabhängig von Handydisplay oder Screenshot)
     async function processForm(method) {
         const form = document.getElementById('atemschutzForm');
         
@@ -371,8 +370,8 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4'); // A4: 210 x 297 mm
 
-            // Kopfzeile & Titel
-            doc.setFillColor(220, 53, 69); // Feuerwehr-Rot
+            // Kopfzeile & Akzentbalken
+            doc.setFillColor(220, 53, 69);
             doc.rect(14, 12, 182, 3, 'F');
 
             doc.setFont('helvetica', 'bold');
@@ -380,7 +379,7 @@
             doc.setTextColor(220, 53, 69);
             doc.text('Feuerwehr Krugzell', 14, 22);
 
-            doc.setFontSize(14);
+            doc.setFontSize(13);
             doc.setTextColor(40, 40, 40);
             doc.text('Atemschutz Verwendungs- & Prüfnachweis', 14, 29);
 
@@ -391,20 +390,29 @@
             // 1. Stammdaten
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
+            doc.setTextColor(220, 53, 69);
             doc.text('1. Allgemeine Angaben', 14, 40);
 
             doc.setFont('helvetica', 'normal');
-            doc.text(`Anlass: ${anlassVal}`, 14, 46);
-            doc.text(`Datum: ${datumVal}`, 80, 46);
-            doc.text(`Ort / Objekt: ${einsatzortVal}`, 140, 46);
+            doc.setTextColor(40, 40, 40);
+            doc.text(`Anlass: ${anlassVal}`, 14, 47);
+            doc.text(`Datum: ${datumVal}`, 80, 47);
+            doc.text(`Ort / Objekt: ${einsatzortVal}`, 140, 47);
 
             // 2. Geräteträger
             doc.setFont('helvetica', 'bold');
-            doc.text('2. Atemschutzgeräteträger', 14, 54);
-            doc.setFont('helvetica', 'normal');
-            doc.text(`Name, Vorname: ${agtName}`, 14, 60);
+            doc.setTextColor(220, 53, 69);
+            doc.text('2. Atemschutzgeräteträger', 14, 56);
 
-            // 3. Gerätenachweis - Tabelle erstellen mit autoTable
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(40, 40, 40);
+            doc.text(`Name, Vorname: ${agtName}`, 14, 63);
+
+            // 3. Gerätenachweis (Reine Vektor-Tabelle)
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(220, 53, 69);
+            doc.text('3. Gerätenachweis', 14, 72);
+
             const gtBestand = document.getElementById('gt_bestand').value || '-';
             const flBestand = document.getElementById('fl_bestand').value || '-';
             const druckBestand = document.getElementById('druck_bestand').value ? `${document.getElementById('druck_bestand').value} bar` : '-';
@@ -417,37 +425,66 @@
             const laNeu = document.getElementById('la_neu').value || '-';
             const maskeNeu = document.getElementById('maske_neu').value || '-';
 
-            doc.autoTable({
-                startY: 66,
-                head: [['Komponente', '3.1 Bestandsgerät (Verwendet)', '3.2 Neues / Getauschtes Gerät']],
-                body: [
-                    ['Grundträger ID', gtBestand, gtNeu],
-                    ['Flasche ID & Druck', `${flBestand} (${druckBestand})`, `${flNeu} (${druckNeu})`],
-                    ['Lungenautomat ID', laBestand, laNeu],
-                    ['Atemschutzmaske ID', maskeBestand, maskeNeu]
-                ],
-                theme: 'grid',
-                headStyles: { fillColor: [220, 53, 69], textColor: [255, 255, 255], fontStyle: 'bold' },
-                styles: { fontSize: 9, cellPadding: 2.5 },
-                margin: { left: 14, right: 14 }
+            let tableY = 77;
+            doc.setFillColor(220, 53, 69);
+            doc.rect(14, tableY, 182, 8, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.text('Komponente', 16, tableY + 5.5);
+            doc.text('3.1 Bestandsgerät (Verwendet)', 68, tableY + 5.5);
+            doc.text('3.2 Neues / Getauschtes Gerät', 133, tableY + 5.5);
+
+            tableY += 8;
+
+            const tableRows = [
+                ['Grundträger ID', gtBestand, gtNeu],
+                ['Flasche ID & Druck', `${flBestand} (${druckBestand})`, `${flNeu} (${druckNeu})`],
+                ['Lungenautomat ID', laBestand, laNeu],
+                ['Atemschutzmaske ID', maskeBestand, maskeNeu]
+            ];
+
+            doc.setDrawColor(210, 210, 210);
+            doc.setFontSize(9);
+
+            tableRows.forEach((row, idx) => {
+                doc.setFillColor(idx % 2 === 0 ? 255 : 248, idx % 2 === 0 ? 255 : 248, idx % 2 === 0 ? 255 : 248);
+                doc.rect(14, tableY, 182, 7.5, 'FD');
+                doc.line(66, tableY, 66, tableY + 7.5);
+                doc.line(131, tableY, 131, tableY + 7.5);
+
+                doc.setTextColor(40, 40, 40);
+                doc.setFont('helvetica', 'bold');
+                doc.text(row[0], 16, tableY + 5);
+
+                doc.setFont('helvetica', 'normal');
+                doc.text(row[1], 68, tableY + 5);
+                doc.text(row[2], 133, tableY + 5);
+
+                tableY += 7.5;
             });
 
-            let currentY = doc.lastAutoTable.finalY + 8;
+            let currentY = tableY + 8;
 
             // 4. Einsatzkurzprüfung
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(10);
+            doc.setTextColor(220, 53, 69);
             doc.text('4. Einsatzkurzprüfung', 14, currentY);
+
             doc.setFont('helvetica', 'normal');
+            doc.setTextColor(40, 40, 40);
             doc.text('[X] Sicht-, Dicht- und Funktionsprüfung erfolgreich durchgeführt.', 14, currentY + 6);
 
             currentY += 14;
 
             // 5. Bemerkungen
             doc.setFont('helvetica', 'bold');
+            doc.setTextColor(220, 53, 69);
             doc.text('5. Bemerkungen / Mängel', 14, currentY);
+
             doc.setFont('helvetica', 'normal');
-            
+            doc.setTextColor(40, 40, 40);
             const splitBemerkungen = doc.splitTextToSize(bemerkungenVal, 182);
             doc.text(splitBemerkungen, 14, currentY + 6);
 
@@ -455,19 +492,21 @@
 
             // 6. Unterschrift
             doc.setFont('helvetica', 'bold');
+            doc.setTextColor(220, 53, 69);
             doc.text('6. Unterschrift des Geräteträgers', 14, currentY);
 
-            // Unterschrift aus Canvas als Bild einbauen
             const signatureImg = signaturePad.toDataURL('image/png');
-            doc.addImage(signatureImg, 'PNG', 14, currentY + 3, 60, 25);
+            doc.addImage(signatureImg, 'PNG', 14, currentY + 3, 55, 22);
 
             doc.setLineWidth(0.3);
-            doc.line(14, currentY + 29, 80, currentY + 29);
+            doc.setDrawColor(150, 150, 150);
+            doc.line(14, currentY + 27, 75, currentY + 27);
             doc.setFontSize(8);
             doc.setFont('helvetica', 'italic');
-            doc.text(`Unterschrieben von ${agtName} am ${datumVal}`, 14, currentY + 33);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Unterschrieben von ${agtName} am ${datumVal}`, 14, currentY + 31);
 
-            // PDF speichern
+            // PDF lokal speichern
             doc.save(dateiname);
 
             // Versenden ausführen
@@ -475,7 +514,7 @@
                 const whatsappText = `Hallo Stefan,%0A%0Aanbei mein Atemschutz-Prüfnachweis.%0A%0A👤 *Geräteträger:* ${encodeURIComponent(agtName)}%0A📅 *Datum:* ${encodeURIComponent(datumVal)}%0A🚒 *Anlass:* ${encodeURIComponent(anlassVal)}%0A%0A_(PDF wurde auf meinem Gerät gespeichert und ist als Anhang beigefügt.)_`;
                 const whatsappUrl = `https://wa.me/${TARGET_PHONE}?text=${whatsappText}`;
 
-                alert('PDF wurde sauber erstellt und gespeichert! WhatsApp öffnet sich jetzt. Bitte füge dort die PDF-Datei als Anhang bei.');
+                alert('PDF wurde erstellt! WhatsApp öffnet sich jetzt. Bitte füge dort die PDF-Datei als Anhang bei.');
                 window.location.href = whatsappUrl;
 
             } else if (method === 'email') {
@@ -484,7 +523,7 @@
                 
                 const mailtoUrl = `mailto:${TARGET_EMAIL}?subject=${encodeURIComponent(subject)}&body=${body}`;
 
-                alert('PDF wurde sauber erstellt und gespeichert! Dein E-Mail-Programm öffnet sich jetzt. Bitte füge dort die heruntergeladene PDF-Datei als Anhang ein.');
+                alert('PDF wurde erstellt! Dein E-Mail-Programm öffnet sich jetzt. Bitte füge dort die heruntergeladene PDF-Datei als Anhang ein.');
                 window.location.href = mailtoUrl;
             }
 
