@@ -231,7 +231,7 @@
             <!-- EINZIGER BUTTON: ABSCHICKEN -->
             <div class="mt-4 no-print">
                 <button type="button" class="btn btn-primary btn-lg w-100 fw-bold fs-5 py-3" onclick="processForm()">
-                    ✉️ ABSCHICKEN
+                    ✉️️ ABSCHICKEN
                 </button>
             </div>
 
@@ -346,7 +346,14 @@
         const laNeu = document.getElementById('la_neu').value || '-';
         const maskeNeu = document.getElementById('maske_neu').value || '-';
 
-        const dateiname = `Atemschutz_Pruefung_${datumVal}_${agtName.replace(/\s+/g, '_')}.pdf`;
+        // Aktuelle Uhrzeit ermitteln für eindeutigen Dateinamen und PDF-Eintrag
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const uhrzeitStr = `${hh}:${mm} Uhr`;
+        const uhrzeitDateiname = `${hh}-${mm}`;
+
+        const dateiname = `Atemschutz_Pruefung_${datumVal}_${uhrzeitDateiname}_${agtName.replace(/\s+/g, '_')}.pdf`;
 
         try {
             // 1. PDF im Speicher als Vektor generieren
@@ -377,7 +384,7 @@
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(40, 40, 40);
             doc.text(`Anlass: ${anlassVal}`, 14, 47);
-            doc.text(`Datum: ${datumVal}`, 80, 47);
+            doc.text(`Datum: ${datumVal} (${uhrzeitStr})`, 75, 47);
             doc.text(`Ort / Objekt: ${einsatzortVal}`, 140, 47);
 
             doc.setFont('helvetica', 'bold');
@@ -468,7 +475,7 @@
             doc.setFontSize(8);
             doc.setFont('helvetica', 'italic');
             doc.setTextColor(100, 100, 100);
-            doc.text(`Unterschrieben von ${agtName} am ${datumVal}`, 14, currentY + 31);
+            doc.text(`Unterschrieben von ${agtName} am ${datumVal} um ${uhrzeitStr}`, 14, currentY + 31);
 
             // 2. Base64-PDF extrahieren
             const pdfDataUri = doc.output('datauristring');
@@ -481,6 +488,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     datum: datumVal,
+                    uhrzeit: uhrzeitStr,
                     anlass: anlassVal,
                     einsatzort: einsatzortVal,
                     agtName: agtName,
@@ -502,7 +510,19 @@
             // 4. PDF lokal auf dem Gerät speichern
             doc.save(dateiname);
 
+            // 5. Bestätigung anzeigen
             alert('Vielen Dank! Der Prüfnachweis wurde erfolgreich übermittelt, in die Tabelle eingetragen und die PDF auf deinem Gerät gespeichert.');
+
+            // 6. Formular & Unterschrift für die nächste Erfassung zurücksetzen
+            form.reset();
+            if (signaturePad) {
+                signaturePad.clear();
+            }
+            const datumInput = document.getElementById('datum');
+            if (datumInput) datumInput.valueAsDate = new Date();
+            const kurzpruefung = document.getElementById('kurzpruefung');
+            if (kurzpruefung) kurzpruefung.checked = true;
+            toggleCustomNameInput();
 
         } catch (error) {
             console.error('Fehler:', error);
