@@ -231,7 +231,7 @@
             <!-- ABSCHICKEN-BUTTON -->
             <div class="mt-4 no-print">
                 <button type="button" class="btn btn-secondary btn-lg w-100 fw-bold fs-5 py-3" id="submit-btn" onclick="processForm()" disabled>
-                    ✉ ABSCHICKEN (Bitte alle Pflichtfelder ausfüllen & unterschreiben)
+                    ✉ ABSCHICKEN
                 </button>
             </div>
 
@@ -302,8 +302,8 @@
             resizeCanvas();
         }
 
-        // Live-Überwachung im Hintergrund (prüft alle 250 Millisekunden, ob alles ausgefüllt ist)
-        setInterval(checkFormValidity, 250);
+        // Live-Überwachung im Hintergrund (prüft alle 200 Millisekunden)
+        setInterval(checkFormValidity, 200);
     });
 
     function clearSignature() {
@@ -312,13 +312,10 @@
         }
     }
 
-    // Permanente Live-Prüfung aller Pflichtfelder
     function checkFormValidity() {
         const submitBtn = document.getElementById('submit-btn');
         if (!submitBtn) return;
         
-        const anlass = document.getElementById('anlass').value;
-        const datum = document.getElementById('datum').value;
         const einsatzort = document.getElementById('einsatzort').value.trim();
         const agtSelect = document.getElementById('agt_select').value;
         const agtCustom = document.getElementById('agt_custom').value.trim();
@@ -329,21 +326,26 @@
         const laBestand = document.getElementById('la_bestand').value.trim();
         const maskeBestand = document.getElementById('maske_bestand').value.trim();
         
-        const kurzpruefungChecked = document.getElementById('kurzpruefung').checked;
-        const isSigned = signaturePad && !signaturePad.isEmpty();
+        const kurzChecked = document.getElementById('kurzpruefung').checked;
+        const hasSigned = signaturePad && !signaturePad.isEmpty();
 
-        let nameValid = true;
-        if (!agtSelect) {
-            nameValid = false;
-        } else if (agtSelect === 'MANUAL' && !agtCustom) {
-            nameValid = false;
+        let nameOk = agtSelect !== "" && agtSelect !== null;
+        if (agtSelect === 'MANUAL') {
+            nameOk = agtCustom !== "";
         }
 
-        const allFilled = anlass && datum && einsatzort && nameValid && 
-                          gtBestand && flBestand && druckBestand && laBestand && maskeBestand && 
-                          kurzpruefungChecked && isSigned;
+        let missing = [];
+        if (!einsatzort) missing.push("Einsatzort");
+        if (!nameOk) missing.push("Name");
+        if (!gtBestand) missing.push("Grundträger ID");
+        if (!flBestand) missing.push("Flaschen ID");
+        if (!druckBestand) missing.push("Druck");
+        if (!laBestand) missing.push("Lungenautomat ID");
+        if (!maskeBestand) missing.push("Masken ID");
+        if (!kurzChecked) missing.push("Kurzprüfung");
+        if (!hasSigned) missing.push("Unterschrift");
 
-        if (allFilled) {
+        if (missing.length === 0) {
             submitBtn.disabled = false;
             submitBtn.classList.remove('btn-secondary');
             submitBtn.classList.add('btn-primary');
@@ -352,7 +354,7 @@
             submitBtn.disabled = true;
             submitBtn.classList.remove('btn-primary');
             submitBtn.classList.add('btn-secondary');
-            submitBtn.innerHTML = '✉ ABSCHICKEN (Bitte alle Pflichtfelder ausfüllen & unterschreiben)';
+            submitBtn.innerHTML = `✉ ABSCHICKEN (Fehlt: ${missing.join(', ')})`;
         }
     }
 
