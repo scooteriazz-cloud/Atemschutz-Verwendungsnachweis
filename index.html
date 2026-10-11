@@ -88,7 +88,7 @@
                 </div>
                 <div class="col-md-4">
                     <label for="datum" class="form-label fw-bold">Datum</label>
-                    <input type="date" class="form-control" id="datum" required onchange="checkFormValidity()">
+                    <input type="date" class="form-control" id="datum" required onchange="checkFormValidity()" oninput="checkFormValidity()">
                 </div>
                 <div class="col-md-4">
                     <label for="einsatzort" class="form-label fw-bold">Einsatzort / Übungsobjekt</label>
@@ -207,8 +207,8 @@
             <!-- 4. Einsatzkurzprüfung -->
             <h5 class="section-header mt-4">4. Einsatzkurzprüfung</h5>
             <div class="form-check mb-3">
-                <!-- Checkbox ist nun standardmäßig NICHT mehr checked -->
-                <input class="form-check-input" type="checkbox" id="kurzpruefung" required onchange="checkFormValidity()">
+                <!-- Checkbox startet ungeprüft, onChange prüft Formular -->
+                <input class="form-check-input" type="checkbox" id="kurzpruefung" onchange="checkFormValidity()">
                 <label class="form-check-label fw-bold" for="kurzpruefung">
                     Sicht-, Dicht- und Funktionsprüfung erfolgreich durchgeführt.
                 </label>
@@ -229,10 +229,10 @@
                 </div>
             </div>
 
-            <!-- EINZIGER BUTTON: ABSCHICKEN (Startet im Zustand disabled) -->
+            <!-- ABSCHICKEN-BUTTON -->
             <div class="mt-4 no-print">
                 <button type="button" class="btn btn-secondary btn-lg w-100 fw-bold fs-5 py-3" id="submit-btn" onclick="processForm()" disabled>
-                    ✉ ABSCHICKEN (Bitte erst alle Daten ausfüllen & unterschreiben)
+                    ✉ ABSCHICKEN (Bitte alle Pflichtfelder ausfüllen & unterschreiben)
                 </button>
             </div>
 
@@ -281,6 +281,7 @@
             customDiv.classList.add('d-none');
             customInput.required = false;
         }
+        checkFormValidity();
     }
 
     document.addEventListener("DOMContentLoaded", function() {
@@ -291,7 +292,8 @@
         if (canvas && typeof SignaturePad !== 'undefined') {
             signaturePad = new SignaturePad(canvas, { 
                 backgroundColor: 'rgb(255, 255, 255)',
-                onEnd: function() { checkFormValidity(); }
+                onEnd: function() { checkFormValidity(); },
+                onBegin: function() { checkFormValidity(); }
             });
 
             function resizeCanvas() {
@@ -316,15 +318,39 @@
         }
     }
 
-    // Prüft, ob Formular valide ist & Unterschrift vorliegt
+    // Explizite JavaScript-Prüfung aller Pflichtfelder (zuverlässig auf allen Handys)
     function checkFormValidity() {
-        const form = document.getElementById('atemschutzForm');
         const submitBtn = document.getElementById('submit-btn');
         
-        const isFormValid = form.checkValidity();
-        const isSignatureValid = signaturePad && !signaturePad.isEmpty();
+        const anlass = document.getElementById('anlass').value;
+        const datum = document.getElementById('datum').value;
+        const einsatzort = document.getElementById('einsatzort').value.trim();
+        const agtSelect = document.getElementById('agt_select').value;
+        const agtCustom = document.getElementById('agt_custom').value.trim();
+        
+        const gtBestand = document.getElementById('gt_bestand').value.trim();
+        const flBestand = document.getElementById('fl_bestand').value.trim();
+        const druckBestand = document.getElementById('druck_bestand').value.trim();
+        const laBestand = document.getElementById('la_bestand').value.trim();
+        const maskeBestand = document.getElementById('maske_bestand').value.trim();
+        
+        const kurzpruefungChecked = document.getElementById('kurzpruefung').checked;
+        const isSigned = signaturePad && !signaturePad.isEmpty();
 
-        if (isFormValid && isSignatureValid) {
+        // Namensprüfung (entweder Dropdown oder manuelles Feld)
+        let nameValid = true;
+        if (!agtSelect) {
+            nameValid = false;
+        } else if (agtSelect === 'MANUAL' && !agtCustom) {
+            nameValid = false;
+        }
+
+        // Alle Bedingungen prüfen
+        const allFilled = anlass && datum && einsatzort && nameValid && 
+                          gtBestand && flBestand && druckBestand && laBestand && maskeBestand && 
+                          kurzpruefungChecked && isSigned;
+
+        if (allFilled) {
             submitBtn.disabled = false;
             submitBtn.classList.remove('btn-secondary');
             submitBtn.classList.add('btn-primary');
@@ -333,32 +359,15 @@
             submitBtn.disabled = true;
             submitBtn.classList.remove('btn-primary');
             submitBtn.classList.add('btn-secondary');
-            submitBtn.innerHTML = '✉ ABSCHICKEN (Bitte erst ausfüllen & unterschreiben)';
+            submitBtn.innerHTML = '✉ ABSCHICKEN (Bitte alle Pflichtfelder ausfüllen & unterschreiben)';
         }
     }
 
     async function processForm() {
-        const form = document.getElementById('atemschutzForm');
-        
-        if (!form.checkValidity()) {
-            form.reportValidity();
-            return;
-        }
-
-        if (signaturePad && signaturePad.isEmpty()) {
-            alert('Bitte leiste eine Unterschrift vor dem Absenden!');
-            return;
-        }
-
         const selectVal = document.getElementById('agt_select').value;
         let agtName = selectVal;
         if (selectVal === 'MANUAL') {
             agtName = document.getElementById('agt_custom').value;
-        }
-
-        if (!agtName) {
-            alert('Bitte wähle einen Geräteträger aus!');
-            return;
         }
 
         const datumVal = document.getElementById('datum').value || 'Unbekannt';
@@ -540,7 +549,7 @@
             alert('Vielen Dank! Der Prüfnachweis wurde erfolgreich übermittelt, in die Tabelle eingetragen und die PDF auf deinem Gerät gespeichert.');
 
             // Formular & Unterschrift zurücksetzen und Button wieder sperren
-            form.reset();
+            document.getElementById('atemschutzForm').reset();
             if (signaturePad) {
                 signaturePad.clear();
             }
