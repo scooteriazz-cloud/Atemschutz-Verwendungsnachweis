@@ -79,7 +79,7 @@
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
                     <label for="anlass" class="form-label fw-bold">Anlass</label>
-                    <select class="form-select" id="anlass" required onchange="checkFormValidity()">
+                    <select class="form-select" id="anlass" required>
                         <option value="Übung">Übung</option>
                         <option value="Einsatz">Einsatz</option>
                         <option value="Atemschutzzentrum">Atemschutzzentrum</option>
@@ -88,11 +88,11 @@
                 </div>
                 <div class="col-md-4">
                     <label for="datum" class="form-label fw-bold">Datum</label>
-                    <input type="date" class="form-control" id="datum" required onchange="checkFormValidity()" oninput="checkFormValidity()">
+                    <input type="date" class="form-control" id="datum" required>
                 </div>
                 <div class="col-md-4">
                     <label for="einsatzort" class="form-label fw-bold">Einsatzort / Übungsobjekt</label>
-                    <input type="text" class="form-control" id="einsatzort" placeholder="z. B. Krugzell / Bogen" required oninput="checkFormValidity()">
+                    <input type="text" class="form-control" id="einsatzort" placeholder="z. B. Krugzell / Bogen" required>
                 </div>
             </div>
 
@@ -100,7 +100,7 @@
             <h5 class="section-header mt-4">2. Atemschutzgeräteträger</h5>
             <div class="mb-3">
                 <label for="agt_select" class="form-label fw-bold">Geräteträger auswählen</label>
-                <select class="form-select" id="agt_select" required onchange="toggleCustomNameInput(); checkFormValidity();">
+                <select class="form-select" id="agt_select" required onchange="toggleCustomNameInput()">
                     <option value="" selected disabled>-- Bitte Namen auswählen --</option>
                     <option value="Thomas Berger">Thomas Berger</option>
                     <option value="Stefan Hafner">Stefan Hafner</option>
@@ -126,7 +126,7 @@
             </div>
             <div class="mb-3 d-none" id="custom_name_div">
                 <label for="agt_custom" class="form-label fw-bold">Name, Vorname (manuell)</label>
-                <input type="text" class="form-control" id="agt_custom" placeholder="Name manuell eintragen" oninput="checkFormValidity()">
+                <input type="text" class="form-control" id="agt_custom" placeholder="Name manuell eintragen">
             </div>
 
             <!-- 3. Gerätenachweis -->
@@ -138,15 +138,15 @@
                 <div class="col-md-6">
                     <label class="form-label">Grundträger ID</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" id="gt_bestand" placeholder="ID scannen/eintragen" required oninput="checkFormValidity()">
+                        <input type="text" class="form-control" id="gt_bestand" placeholder="ID scannen/eintragen" required>
                         <button class="btn btn-outline-secondary no-print" type="button" onclick="startScanner('gt_bestand')">📷 Scan</button>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Flasche ID & Druck (bar)</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" id="fl_bestand" placeholder="Flaschen-ID" required oninput="checkFormValidity()">
-                        <input type="number" class="form-control" id="druck_bestand" placeholder="Druck (bar)" min="0" max="350" required oninput="checkFormValidity()">
+                        <input type="text" class="form-control" id="fl_bestand" placeholder="Flaschen-ID" required>
+                        <input type="number" class="form-control" id="druck_bestand" placeholder="Druck (bar)" min="0" max="350" required>
                         <button class="btn btn-outline-secondary no-print" type="button" onclick="startScanner('fl_bestand')">📷 Scan</button>
                     </div>
                 </div>
@@ -155,14 +155,14 @@
                 <div class="col-md-6">
                     <label class="form-label">Lungenautomat ID</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" id="la_bestand" placeholder="LA-ID" required oninput="checkFormValidity()">
+                        <input type="text" class="form-control" id="la_bestand" placeholder="LA-ID" required>
                         <button class="btn btn-outline-secondary no-print" type="button" onclick="startScanner('la_bestand')">📷 Scan</button>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Atemschutzmaske ID</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" id="maske_bestand" placeholder="Masken-ID" required oninput="checkFormValidity()">
+                        <input type="text" class="form-control" id="maske_bestand" placeholder="Masken-ID" required>
                         <button class="btn btn-outline-secondary no-print" type="button" onclick="startScanner('maske_bestand')">📷 Scan</button>
                     </div>
                 </div>
@@ -207,8 +207,7 @@
             <!-- 4. Einsatzkurzprüfung -->
             <h5 class="section-header mt-4">4. Einsatzkurzprüfung</h5>
             <div class="form-check mb-3">
-                <!-- Checkbox startet ungeprüft, onChange prüft Formular -->
-                <input class="form-check-input" type="checkbox" id="kurzpruefung" onchange="checkFormValidity()">
+                <input class="form-check-input" type="checkbox" id="kurzpruefung">
                 <label class="form-check-label fw-bold" for="kurzpruefung">
                     Sicht-, Dicht- und Funktionsprüfung erfolgreich durchgeführt.
                 </label>
@@ -281,7 +280,6 @@
             customDiv.classList.add('d-none');
             customInput.required = false;
         }
-        checkFormValidity();
     }
 
     document.addEventListener("DOMContentLoaded", function() {
@@ -290,11 +288,7 @@
 
         const canvas = document.getElementById('signature-pad');
         if (canvas && typeof SignaturePad !== 'undefined') {
-            signaturePad = new SignaturePad(canvas, { 
-                backgroundColor: 'rgb(255, 255, 255)',
-                onEnd: function() { checkFormValidity(); },
-                onBegin: function() { checkFormValidity(); }
-            });
+            signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
 
             function resizeCanvas() {
                 const ratio = Math.max(window.devicePixelRatio || 1, 1);
@@ -302,25 +296,26 @@
                 canvas.height = canvas.offsetHeight * ratio;
                 canvas.getContext("2d").scale(ratio, ratio);
                 signaturePad.clear();
-                checkFormValidity();
             }
 
             window.addEventListener("resize", resizeCanvas);
             resizeCanvas();
         }
-        checkFormValidity();
+
+        // Live-Überwachung im Hintergrund (prüft alle 250 Millisekunden, ob alles ausgefüllt ist)
+        setInterval(checkFormValidity, 250);
     });
 
     function clearSignature() {
         if (signaturePad) {
             signaturePad.clear();
-            checkFormValidity();
         }
     }
 
-    // Explizite JavaScript-Prüfung aller Pflichtfelder (zuverlässig auf allen Handys)
+    // Permanente Live-Prüfung aller Pflichtfelder
     function checkFormValidity() {
         const submitBtn = document.getElementById('submit-btn');
+        if (!submitBtn) return;
         
         const anlass = document.getElementById('anlass').value;
         const datum = document.getElementById('datum').value;
@@ -337,7 +332,6 @@
         const kurzpruefungChecked = document.getElementById('kurzpruefung').checked;
         const isSigned = signaturePad && !signaturePad.isEmpty();
 
-        // Namensprüfung (entweder Dropdown oder manuelles Feld)
         let nameValid = true;
         if (!agtSelect) {
             nameValid = false;
@@ -345,7 +339,6 @@
             nameValid = false;
         }
 
-        // Alle Bedingungen prüfen
         const allFilled = anlass && datum && einsatzort && nameValid && 
                           gtBestand && flBestand && druckBestand && laBestand && maskeBestand && 
                           kurzpruefungChecked && isSigned;
@@ -548,7 +541,7 @@
 
             alert('Vielen Dank! Der Prüfnachweis wurde erfolgreich übermittelt, in die Tabelle eingetragen und die PDF auf deinem Gerät gespeichert.');
 
-            // Formular & Unterschrift zurücksetzen und Button wieder sperren
+            // Formular zurücksetzen
             document.getElementById('atemschutzForm').reset();
             if (signaturePad) {
                 signaturePad.clear();
@@ -556,7 +549,6 @@
             const datumInput = document.getElementById('datum');
             if (datumInput) datumInput.valueAsDate = new Date();
             toggleCustomNameInput();
-            checkFormValidity();
 
         } catch (error) {
             console.error('Fehler:', error);
@@ -577,7 +569,6 @@
                 document.getElementById(currentTargetInputId).value = decodedText;
                 stopScanner();
                 modal.hide();
-                checkFormValidity();
             },
             (errorMessage) => { /* Dekodierungsfehler ignorieren */ }
         ).catch(err => {
