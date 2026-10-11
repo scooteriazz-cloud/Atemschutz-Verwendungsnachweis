@@ -79,7 +79,7 @@
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
                     <label for="anlass" class="form-label fw-bold">Anlass</label>
-                    <select class="form-select" id="anlass" required>
+                    <select class="form-select" id="anlass" required onchange="checkFormValidity()">
                         <option value="Übung">Übung</option>
                         <option value="Einsatz">Einsatz</option>
                         <option value="Atemschutzzentrum">Atemschutzzentrum</option>
@@ -88,11 +88,11 @@
                 </div>
                 <div class="col-md-4">
                     <label for="datum" class="form-label fw-bold">Datum</label>
-                    <input type="date" class="form-control" id="datum" required>
+                    <input type="date" class="form-control" id="datum" required onchange="checkFormValidity()">
                 </div>
                 <div class="col-md-4">
                     <label for="einsatzort" class="form-label fw-bold">Einsatzort / Übungsobjekt</label>
-                    <input type="text" class="form-control" id="einsatzort" placeholder="z. B. Krugzell / Bogen" required>
+                    <input type="text" class="form-control" id="einsatzort" placeholder="z. B. Krugzell / Bogen" required oninput="checkFormValidity()">
                 </div>
             </div>
 
@@ -100,7 +100,7 @@
             <h5 class="section-header mt-4">2. Atemschutzgeräteträger</h5>
             <div class="mb-3">
                 <label for="agt_select" class="form-label fw-bold">Geräteträger auswählen</label>
-                <select class="form-select" id="agt_select" required onchange="toggleCustomNameInput()">
+                <select class="form-select" id="agt_select" required onchange="toggleCustomNameInput(); checkFormValidity();">
                     <option value="" selected disabled>-- Bitte Namen auswählen --</option>
                     <option value="Thomas Berger">Thomas Berger</option>
                     <option value="Stefan Hafner">Stefan Hafner</option>
@@ -126,7 +126,7 @@
             </div>
             <div class="mb-3 d-none" id="custom_name_div">
                 <label for="agt_custom" class="form-label fw-bold">Name, Vorname (manuell)</label>
-                <input type="text" class="form-control" id="agt_custom" placeholder="Name manuell eintragen">
+                <input type="text" class="form-control" id="agt_custom" placeholder="Name manuell eintragen" oninput="checkFormValidity()">
             </div>
 
             <!-- 3. Gerätenachweis -->
@@ -138,15 +138,15 @@
                 <div class="col-md-6">
                     <label class="form-label">Grundträger ID</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" id="gt_bestand" placeholder="ID scannen/eintragen" required>
+                        <input type="text" class="form-control" id="gt_bestand" placeholder="ID scannen/eintragen" required oninput="checkFormValidity()">
                         <button class="btn btn-outline-secondary no-print" type="button" onclick="startScanner('gt_bestand')">📷 Scan</button>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Flasche ID & Druck (bar)</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" id="fl_bestand" placeholder="Flaschen-ID" required>
-                        <input type="number" class="form-control" id="druck_bestand" placeholder="Druck (bar)" min="0" max="350" required>
+                        <input type="text" class="form-control" id="fl_bestand" placeholder="Flaschen-ID" required oninput="checkFormValidity()">
+                        <input type="number" class="form-control" id="druck_bestand" placeholder="Druck (bar)" min="0" max="350" required oninput="checkFormValidity()">
                         <button class="btn btn-outline-secondary no-print" type="button" onclick="startScanner('fl_bestand')">📷 Scan</button>
                     </div>
                 </div>
@@ -155,14 +155,14 @@
                 <div class="col-md-6">
                     <label class="form-label">Lungenautomat ID</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" id="la_bestand" placeholder="LA-ID" required>
+                        <input type="text" class="form-control" id="la_bestand" placeholder="LA-ID" required oninput="checkFormValidity()">
                         <button class="btn btn-outline-secondary no-print" type="button" onclick="startScanner('la_bestand')">📷 Scan</button>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Atemschutzmaske ID</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" id="maske_bestand" placeholder="Masken-ID" required>
+                        <input type="text" class="form-control" id="maske_bestand" placeholder="Masken-ID" required oninput="checkFormValidity()">
                         <button class="btn btn-outline-secondary no-print" type="button" onclick="startScanner('maske_bestand')">📷 Scan</button>
                     </div>
                 </div>
@@ -207,7 +207,8 @@
             <!-- 4. Einsatzkurzprüfung -->
             <h5 class="section-header mt-4">4. Einsatzkurzprüfung</h5>
             <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" id="kurzpruefung" checked required>
+                <!-- Checkbox ist nun standardmäßig NICHT mehr checked -->
+                <input class="form-check-input" type="checkbox" id="kurzpruefung" required onchange="checkFormValidity()">
                 <label class="form-check-label fw-bold" for="kurzpruefung">
                     Sicht-, Dicht- und Funktionsprüfung erfolgreich durchgeführt.
                 </label>
@@ -224,14 +225,14 @@
             <div class="mb-3">
                 <canvas id="signature-pad"></canvas>
                 <div class="mt-2 text-end no-print">
-                    <button type="button" class="btn btn-sm btn-outline-danger" id="clear-signature">Unterschrift löschen</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" id="clear-signature" onclick="clearSignature()">Unterschrift löschen</button>
                 </div>
             </div>
 
-            <!-- EINZIGER BUTTON: ABSCHICKEN -->
+            <!-- EINZIGER BUTTON: ABSCHICKEN (Startet im Zustand disabled) -->
             <div class="mt-4 no-print">
-                <button type="button" class="btn btn-primary btn-lg w-100 fw-bold fs-5 py-3" onclick="processForm()">
-                    ✉️️ ABSCHICKEN
+                <button type="button" class="btn btn-secondary btn-lg w-100 fw-bold fs-5 py-3" id="submit-btn" onclick="processForm()" disabled>
+                    ✉ ABSCHICKEN (Bitte erst alle Daten ausfüllen & unterschreiben)
                 </button>
             </div>
 
@@ -288,7 +289,10 @@
 
         const canvas = document.getElementById('signature-pad');
         if (canvas && typeof SignaturePad !== 'undefined') {
-            signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
+            signaturePad = new SignaturePad(canvas, { 
+                backgroundColor: 'rgb(255, 255, 255)',
+                onEnd: function() { checkFormValidity(); }
+            });
 
             function resizeCanvas() {
                 const ratio = Math.max(window.devicePixelRatio || 1, 1);
@@ -296,14 +300,42 @@
                 canvas.height = canvas.offsetHeight * ratio;
                 canvas.getContext("2d").scale(ratio, ratio);
                 signaturePad.clear();
+                checkFormValidity();
             }
 
             window.addEventListener("resize", resizeCanvas);
             resizeCanvas();
-
-            document.getElementById('clear-signature').addEventListener('click', () => signaturePad.clear());
         }
+        checkFormValidity();
     });
+
+    function clearSignature() {
+        if (signaturePad) {
+            signaturePad.clear();
+            checkFormValidity();
+        }
+    }
+
+    // Prüft, ob Formular valide ist & Unterschrift vorliegt
+    function checkFormValidity() {
+        const form = document.getElementById('atemschutzForm');
+        const submitBtn = document.getElementById('submit-btn');
+        
+        const isFormValid = form.checkValidity();
+        const isSignatureValid = signaturePad && !signaturePad.isEmpty();
+
+        if (isFormValid && isSignatureValid) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('btn-secondary');
+            submitBtn.classList.add('btn-primary');
+            submitBtn.innerHTML = '✉ ABSCHICKEN';
+        } else {
+            submitBtn.disabled = true;
+            submitBtn.classList.remove('btn-primary');
+            submitBtn.classList.add('btn-secondary');
+            submitBtn.innerHTML = '✉ ABSCHICKEN (Bitte erst ausfüllen & unterschreiben)';
+        }
+    }
 
     async function processForm() {
         const form = document.getElementById('atemschutzForm');
@@ -346,7 +378,6 @@
         const laNeu = document.getElementById('la_neu').value || '-';
         const maskeNeu = document.getElementById('maske_neu').value || '-';
 
-        // Aktuelle Uhrzeit ermitteln für eindeutigen Dateinamen und PDF-Eintrag
         const now = new Date();
         const hh = String(now.getHours()).padStart(2, '0');
         const mm = String(now.getMinutes()).padStart(2, '0');
@@ -356,7 +387,6 @@
         const dateiname = `Atemschutz_Pruefung_${datumVal}_${uhrzeitDateiname}_${agtName.replace(/\s+/g, '_')}.pdf`;
 
         try {
-            // 1. PDF im Speicher als Vektor generieren
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
 
@@ -477,11 +507,9 @@
             doc.setTextColor(100, 100, 100);
             doc.text(`Unterschrieben von ${agtName} am ${datumVal} um ${uhrzeitStr}`, 14, currentY + 31);
 
-            // 2. Base64-PDF extrahieren
             const pdfDataUri = doc.output('datauristring');
             const pdfBase64 = pdfDataUri.split(',')[1];
 
-            // 3. Daten an Google Apps Script senden
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
@@ -507,22 +535,19 @@
                 })
             });
 
-            // 4. PDF lokal auf dem Gerät speichern
             doc.save(dateiname);
 
-            // 5. Bestätigung anzeigen
             alert('Vielen Dank! Der Prüfnachweis wurde erfolgreich übermittelt, in die Tabelle eingetragen und die PDF auf deinem Gerät gespeichert.');
 
-            // 6. Formular & Unterschrift für die nächste Erfassung zurücksetzen
+            // Formular & Unterschrift zurücksetzen und Button wieder sperren
             form.reset();
             if (signaturePad) {
                 signaturePad.clear();
             }
             const datumInput = document.getElementById('datum');
             if (datumInput) datumInput.valueAsDate = new Date();
-            const kurzpruefung = document.getElementById('kurzpruefung');
-            if (kurzpruefung) kurzpruefung.checked = true;
             toggleCustomNameInput();
+            checkFormValidity();
 
         } catch (error) {
             console.error('Fehler:', error);
@@ -543,6 +568,7 @@
                 document.getElementById(currentTargetInputId).value = decodedText;
                 stopScanner();
                 modal.hide();
+                checkFormValidity();
             },
             (errorMessage) => { /* Dekodierungsfehler ignorieren */ }
         ).catch(err => {
