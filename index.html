@@ -207,7 +207,7 @@
             <!-- 4. Einsatzkurzprüfung -->
             <h5 class="section-header mt-4">4. Einsatzkurzprüfung</h5>
             <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" id="kurzpruefung">
+                <input class="form-check-input" type="checkbox" id="kurzpruefung" required>
                 <label class="form-check-label fw-bold" for="kurzpruefung">
                     Sicht-, Dicht- und Funktionsprüfung erfolgreich durchgeführt.
                 </label>
@@ -228,9 +228,9 @@
                 </div>
             </div>
 
-            <!-- ABSCHICKEN-BUTTON -->
+            <!-- ABSCHICKEN-BUTTON (Stets aktiv & klickbar) -->
             <div class="mt-4 no-print">
-                <button type="button" class="btn btn-secondary btn-lg w-100 fw-bold fs-5 py-3" id="submit-btn" onclick="processForm()" disabled>
+                <button type="button" class="btn btn-primary btn-lg w-100 fw-bold fs-5 py-3" onclick="processForm()">
                     ✉ ABSCHICKEN
                 </button>
             </div>
@@ -301,9 +301,6 @@
             window.addEventListener("resize", resizeCanvas);
             resizeCanvas();
         }
-
-        // Live-Überwachung im Hintergrund (prüft alle 200 Millisekunden)
-        setInterval(checkFormValidity, 200);
     });
 
     function clearSignature() {
@@ -312,57 +309,29 @@
         }
     }
 
-    function checkFormValidity() {
-        const submitBtn = document.getElementById('submit-btn');
-        if (!submitBtn) return;
-        
-        const einsatzort = document.getElementById('einsatzort').value.trim();
-        const agtSelect = document.getElementById('agt_select').value;
-        const agtCustom = document.getElementById('agt_custom').value.trim();
-        
-        const gtBestand = document.getElementById('gt_bestand').value.trim();
-        const flBestand = document.getElementById('fl_bestand').value.trim();
-        const druckBestand = document.getElementById('druck_bestand').value.trim();
-        const laBestand = document.getElementById('la_bestand').value.trim();
-        const maskeBestand = document.getElementById('maske_bestand').value.trim();
-        
-        const kurzChecked = document.getElementById('kurzpruefung').checked;
-        const hasSigned = signaturePad && !signaturePad.isEmpty();
-
-        let nameOk = agtSelect !== "" && agtSelect !== null;
-        if (agtSelect === 'MANUAL') {
-            nameOk = agtCustom !== "";
-        }
-
-        let missing = [];
-        if (!einsatzort) missing.push("Einsatzort");
-        if (!nameOk) missing.push("Name");
-        if (!gtBestand) missing.push("Grundträger ID");
-        if (!flBestand) missing.push("Flaschen ID");
-        if (!druckBestand) missing.push("Druck");
-        if (!laBestand) missing.push("Lungenautomat ID");
-        if (!maskeBestand) missing.push("Masken ID");
-        if (!kurzChecked) missing.push("Kurzprüfung");
-        if (!hasSigned) missing.push("Unterschrift");
-
-        if (missing.length === 0) {
-            submitBtn.disabled = false;
-            submitBtn.classList.remove('btn-secondary');
-            submitBtn.classList.add('btn-primary');
-            submitBtn.innerHTML = '✉ ABSCHICKEN';
-        } else {
-            submitBtn.disabled = true;
-            submitBtn.classList.remove('btn-primary');
-            submitBtn.classList.add('btn-secondary');
-            submitBtn.innerHTML = `✉ ABSCHICKEN (Fehlt: ${missing.join(', ')})`;
-        }
-    }
-
     async function processForm() {
+        const form = document.getElementById('atemschutzForm');
+        
+        // Standard HTML5 Validierung (zeigt direkt an, was fehlt)
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        if (signaturePad && signaturePad.isEmpty()) {
+            alert('Bitte leiste eine Unterschrift vor dem Absenden!');
+            return;
+        }
+
         const selectVal = document.getElementById('agt_select').value;
         let agtName = selectVal;
         if (selectVal === 'MANUAL') {
             agtName = document.getElementById('agt_custom').value;
+        }
+
+        if (!agtName) {
+            alert('Bitte wähle einen Geräteträger aus!');
+            return;
         }
 
         const datumVal = document.getElementById('datum').value || 'Unbekannt';
@@ -543,8 +512,8 @@
 
             alert('Vielen Dank! Der Prüfnachweis wurde erfolgreich übermittelt, in die Tabelle eingetragen und die PDF auf deinem Gerät gespeichert.');
 
-            // Formular zurücksetzen
-            document.getElementById('atemschutzForm').reset();
+            // Formular nach erfolgreichem Absenden komplett zurücksetzen
+            form.reset();
             if (signaturePad) {
                 signaturePad.clear();
             }
