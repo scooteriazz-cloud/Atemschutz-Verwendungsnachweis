@@ -118,7 +118,7 @@
             </div>
         </div>
 
-        <!-- BEREICH 2: FÜR FÜHRUNGSKRÄFTE (Geschützt per PIN 1873) -->
+        <!-- BEREICH 2: FÜR FÜHRUNGSKRÄFTE (Geschützt per PIN) -->
         <div class="mt-4 text-center">
             <button class="btn btn-outline-secondary btn-sm" type="button" onclick="checkPinAndUnlock()">
                 🔒 Nur für Führungskräfte: Einsätze verwalten & neu anlegen
@@ -256,7 +256,7 @@
     }
 
     function checkPinAndUnlock() {
-        const userPin = prompt("Bitte PIN für den Führungskräfte-Bereich eingeben (PIN: 1873):");
+        const userPin = prompt("Bitte PIN für den Führungskräfte-Bereich eingeben:");
         if (userPin === EINSATZLEITER_PIN) {
             if (bsCollapse) {
                 bsCollapse.show();
