@@ -182,7 +182,7 @@
 
                 <!-- Sektion zum Ein- und Ausblenden von Einsätzen -->
                 <h5 class="fw-bold text-dark mb-3">👁️ Sichtbarkeit für Mannschaft steuern</h5>
-                <p class="text-muted small">Hier kannst vergangenen Einsätze für die Mannschaft ein- oder ausblenden, damit das Dropdown übersichtlich bleibt.</p>
+                <p class="text-muted small">Hier kannst du vergangene Einsätze für die Mannschaft ein- oder ausblenden, damit das Dropdown übersichtlich bleibt.</p>
                 <div id="admin-einsatz-list">
                     <p class="text-muted small">Lade Einsätze...</p>
                 </div>
@@ -264,11 +264,16 @@
             const res = await fetch(GOOGLE_SCRIPT_URL);
             loadedEinsaetze = await res.json();
 
+            // Check ob Array empfangen wurde
+            if (!Array.isArray(loadedEinsaetze)) {
+                throw new Error("Ungültiges Datenformat von Google Apps Script");
+            }
+
             select.innerHTML = '';
             const sichtbareEinsaetze = loadedEinsaetze.filter(e => e.sichtbar === true);
 
             if (sichtbareEinsaetze.length === 0) {
-                select.innerHTML = '<option value="" disabled selected>Keine aktuellen Einsätze verfügbar</option>';
+                select.innerHTML = '<option value="" disabled selected>Keine Einsätze verfügbar (oder alle ausgeblendet)</option>';
             } else {
                 select.innerHTML = '<option value="" selected disabled>-- Bitte Einsatz auswählen --</option>';
                 loadedEinsaetze.forEach((e, idx) => {
@@ -280,10 +285,10 @@
 
             if (adminList) {
                 adminList.innerHTML = '';
-                if (!Array.isArray(loadedEinsaetze) || loadedEinsaetze.length === 0) {
+                if (loadedEinsaetze.length === 0) {
                     adminList.innerHTML = '<p class="text-muted small">Keine Einsätze in der Datenbank.</p>';
                 } else {
-                    loadedEinsaetze.forEach((e, idx) => {
+                    loadedEinsaetze.forEach((e) => {
                         const isVisible = e.sichtbar === true;
                         adminList.innerHTML += `
                             <div class="einsatz-item">
