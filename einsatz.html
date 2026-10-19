@@ -314,7 +314,6 @@
                 });
             }
 
-            // Admin-Liste für Führungskräfte füllen
             if (adminList) {
                 adminList.innerHTML = '';
                 if (loadedEinsaetze.length === 0) {
@@ -501,7 +500,7 @@
             doc.setDrawColor(200, 200, 200);
             doc.line(14, 38, 196, 38);
 
-            // Einsatzbestätigung Text (Dynamisch mit "Herr" oder "Frau")
+            // Einsatzbestätigung Text
             doc.setFontSize(11);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(40, 40, 40);
@@ -562,9 +561,26 @@
             doc.setFont('helvetica', 'normal');
             doc.text('Einsatzleiter / FFW Krugzell', 14, y);
 
-            // PDF Herunterladen
+            // MOBIL-KOMPATIBLER DOWNLOAD & ÖFFNEN
             const cleanName = memberName.replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, '_');
-            doc.save(`Einsatzbestaetigung_${cleanName}.pdf`);
+            const fileName = `Einsatzbestaetigung_${cleanName}.pdf`;
+
+            // Erzeuge Blob URL für Smartphones
+            const blob = doc.output('blob');
+            const blobUrl = URL.createObjectURL(blob);
+
+            // Versuche erst den direkten Download über einen unsichtbaren Link
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Fallback für iOS / Safari: Öffne das PDF zusätzlich in einem neuen Tab
+            setTimeout(() => {
+                window.open(blobUrl, '_blank');
+            }, 300);
 
         } catch (err) {
             alert('Fehler bei der PDF-Erstellung: ' + err.message);
