@@ -69,7 +69,7 @@
             <div class="card-body">
                 <form id="downloadForm" onsubmit="return false;">
                     
-                    <!-- 1. Einsatz auswählen (Einziges Dropdown) -->
+                    <!-- 1. Einsatz auswählen -->
                     <div class="mb-3">
                         <label for="einsatz_select" class="form-label fw-bold small">1. Einsatz auswählen</label>
                         <select class="form-select" id="einsatz_select" required>
@@ -77,31 +77,38 @@
                         </select>
                     </div>
 
-                    <!-- 2. Name der Einsatzkraft -->
+                    <!-- 2. Anrede & Name der Einsatzkraft -->
                     <div class="mb-3">
-                        <label for="member_select" class="form-label fw-bold small">2. Name der Einsatzkraft</label>
-                        <select class="form-select" id="member_select" required>
-                            <option value="" selected disabled>-- Bitte Namen auswählen --</option>
-                            <option value="Thomas Berger">Thomas Berger</option>
-                            <option value="Stefan Hafner">Stefan Hafner</option>
-                            <option value="Simon Maier">Simon Maier</option>
-                            <option value="Christoph Schilling">Christoph Schilling</option>
-                            <option value="Stefan Brauner">Stefan Brauner</option>
-                            <option value="Florian Schilling">Florian Schilling</option>
-                            <option value="Oliver Bader">Oliver Bader</option>
-                            <option value="Daniel Linortner">Daniel Linortner</option>
-                            <option value="Marvin Schleich">Marvin Schleich</option>
-                            <option value="Markus Hafner">Markus Hafner</option>
-                            <option value="Hans-Jörg Heubuch">Hans-Jörg Heubuch</option>
-                            <option value="Thomas Bader">Thomas Bader</option>
-                            <option value="Fabian Krattenmacher">Fabian Krattenmacher</option>
-                            <option value="Tim Misterek">Tim Misterek</option>
-                            <option value="Michael Hafner">Michael Hafner</option>
-                            <option value="Christoph Waldmann">Christoph Waldmann</option>
-                            <option value="Dieter Pflaum">Dieter Pflaum</option>
-                            <option value="Michael Kiesel">Michael Kiesel</option>
-                            <option value="Peter Hiemer">Peter Hiemer</option>
-                        </select>
+                        <label for="member_name_input" class="form-label fw-bold small">2. Anrede & Name der Einsatzkraft</label>
+                        <div class="input-group">
+                            <select class="form-select" id="salutation_select" style="max-width: 110px;">
+                                <option value="Herr" selected>Herr</option>
+                                <option value="Frau">Frau</option>
+                            </select>
+                            <input class="form-control" id="member_name_input" list="members_list" placeholder="Name eingeben oder auswählen..." required>
+                            <datalist id="members_list">
+                                <option value="Thomas Berger">
+                                <option value="Stefan Hafner">
+                                <option value="Simon Maier">
+                                <option value="Christoph Schilling">
+                                <option value="Stefan Brauner">
+                                <option value="Florian Schilling">
+                                <option value="Oliver Bader">
+                                <option value="Daniel Linortner">
+                                <option value="Marvin Schleich">
+                                <option value="Markus Hafner">
+                                <option value="Hans-Jörg Heubuch">
+                                <option value="Thomas Bader">
+                                <option value="Fabian Krattenmacher">
+                                <option value="Tim Misterek">
+                                <option value="Michael Hafner">
+                                <option value="Christoph Waldmann">
+                                <option value="Dieter Pflaum">
+                                <option value="Michael Kiesel">
+                                <option value="Peter Hiemer">
+                            </datalist>
+                        </div>
+                        <div class="form-text small">Du kannst einen Namen aus der Liste wählen oder direkt frei eintippen.</div>
                     </div>
 
                     <button type="button" class="btn btn-danger w-100 fw-bold py-2 mt-2" onclick="generatePDF()">
@@ -259,6 +266,16 @@
         }
     }
 
+    function formatTime(timeStr) {
+        if (!timeStr) return '?';
+        const str = String(timeStr);
+        const match = str.match(/\d{2}:\d{2}/);
+        if (match) {
+            return match[0];
+        }
+        return str;
+    }
+
     function formatDateDE(isoDateStr) {
         if (!isoDateStr) return '';
         const parts = isoDateStr.split('-');
@@ -290,7 +307,9 @@
                 loadedEinsaetze.forEach((e, idx) => {
                     if (e.sichtbar === true) {
                         const datumDE = formatDateDE(e.datum);
-                        select.innerHTML += `<option value="${idx}">${datumDE} | ${e.stichwort} (${e.beginn} - ${e.ende} Uhr)</option>`;
+                        const beginnClean = formatTime(e.beginn);
+                        const endeClean = formatTime(e.ende);
+                        select.innerHTML += `<option value="${idx}">${datumDE} | ${e.stichwort} (${beginnClean} - ${endeClean} Uhr)</option>`;
                     }
                 });
             }
@@ -437,10 +456,16 @@
 
     function generatePDF() {
         const einsatzIdx = document.getElementById('einsatz_select').value;
-        const memberName = document.getElementById('member_select').value;
+        const salutation = document.getElementById('salutation_select').value;
+        const memberName = document.getElementById('member_name_input').value.trim();
 
-        if (einsatzIdx === "" || einsatzIdx === null || !memberName) {
-            alert('Bitte wähle oben einen Einsatz und deinen Namen aus!');
+        if (einsatzIdx === "" || einsatzIdx === null) {
+            alert('Bitte wähle oben einen Einsatz aus!');
+            return;
+        }
+
+        if (!memberName) {
+            alert('Bitte gib den Namen der Einsatzkraft ein oder wähle einen aus der Liste!');
             return;
         }
 
@@ -451,6 +476,8 @@
 
         const e = loadedEinsaetze[einsatzIdx];
         const datumDE = formatDateDE(e.datum);
+        const beginnClean = formatTime(e.beginn);
+        const endeClean = formatTime(e.ende);
 
         try {
             const { jsPDF } = window.jspdf;
@@ -474,18 +501,18 @@
             doc.setDrawColor(200, 200, 200);
             doc.line(14, 38, 196, 38);
 
-            // Einsatzbestätigung Text
+            // Einsatzbestätigung Text (Dynamisch mit "Herr" oder "Frau")
             doc.setFontSize(11);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(40, 40, 40);
-            doc.text(`Herr ${memberName} war am ${datumDE} für die FFW Krugzell im Einsatz.`, 14, 48);
+            doc.text(`${salutation} ${memberName} war am ${datumDE} für die FFW Krugzell im Einsatz.`, 14, 48);
 
             // Einsatzdetails
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             
             const details = [
-                ['Alarmzeit / Einsatzende:', `${datumDE}, ${e.beginn} - ${e.ende} Uhr`],
+                ['Alarmzeit / Einsatzende:', `${datumDE}, ${beginnClean} - ${endeClean} Uhr`],
                 ['Einsatztyp / -stichwort:', e.stichwort || 'Feuerwehreinsatz'],
                 ['Einsatzort:', e.ort || 'Krugzell'],
                 ['Beschreibung:', e.beschreibung || 'Keine zusätzliche Beschreibung hinterlegt.']
