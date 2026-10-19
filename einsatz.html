@@ -37,6 +37,16 @@
             padding: 15px;
             margin-bottom: 25px;
         }
+        .einsatz-item {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -98,10 +108,10 @@
             </div>
         </div>
 
-        <!-- BEREICH 2: FÜR DEN EINSATZLEITER / GRUPPENFÜHRER (Geschützt per PIN 1873) -->
+        <!-- BEREICH 2: FÜR FÜHRUNGSKRÄFTE (Geschützt per PIN 1873) -->
         <div class="mt-5 text-center">
             <button class="btn btn-outline-secondary btn-sm" type="button" onclick="checkPinAndUnlock()">
-                🔒 Nur für Führungskräfte: Neuen Einsatz anlegen
+                🔒 Nur für Führungskräfte: Einsätze verwalten & neu anlegen
             </button>
         </div>
 
@@ -134,8 +144,17 @@
                             <input type="time" class="form-control" id="el_ende" required>
                         </div>
                         <div class="col-md-4">
-                            <label for="el_leiter" class="form-label fw-bold">Einsatzleiter / Gruppenführer</label>
-                            <input type="text" class="form-control" id="el_leiter" placeholder="z. B. Stefan Renger" required>
+                            <label class="form-label fw-bold">Dienstgrad & Name</label>
+                            <div class="input-group">
+                                <select class="form-select" id="el_dienstgrad" style="max-width: 140px;">
+                                    <option value="1. Kommandant">1. Kdt.</option>
+                                    <option value="2. Kommandant">2. Kdt.</option>
+                                    <option value="Zugführer">Zugführer</option>
+                                    <option value="Gruppenführer" selected>GrFü</option>
+                                    <option value="Atemschutzwart">Atemschutzwart</option>
+                                </select>
+                                <input type="text" class="form-control" id="el_name" placeholder="Name (z.B. S. Renger)" required>
+                            </div>
                         </div>
                     </div>
 
@@ -158,6 +177,15 @@
                         💾 Einsatz freigeben & speichern
                     </button>
                 </form>
+
+                <hr class="my-4">
+
+                <!-- Sektion zum Ein- und Ausblenden von Einsätzen -->
+                <h5 class="fw-bold text-dark mb-3">👁️ Sichtbarkeit für Mannschaft steuern</h5>
+                <p class="text-muted small">Hier kannst vergangenen Einsätze für die Mannschaft ein- oder ausblenden, damit das Dropdown übersichtlich bleibt.</p>
+                <div id="admin-einsatz-list">
+                    <p class="text-muted small">Lade Einsätze...</p>
+                </div>
             </div>
         </div>
 
@@ -181,7 +209,6 @@
         if (collapseElement) {
             bsCollapse = new bootstrap.Collapse(collapseElement, { toggle: false });
             
-            // WICHTIG: Erst initialisieren, wenn das Akkordeon auf dem Laptop komplett sichtbar ist!
             collapseElement.addEventListener('shown.bs.collapse', function () {
                 initSignaturePad();
             });
@@ -219,10 +246,10 @@
     }
 
     function checkPinAndUnlock() {
-        const userPin = prompt("Bitte PIN für den Führungskräfte-Bereich eingeben:");
+        const userPin = prompt("Bitte PIN für den Führungskräfte-Bereich eingeben (PIN: 1873):");
         if (userPin === EINSATZLEITER_PIN) {
             if (bsCollapse) {
-                bsCollapse.show(); // Löst das 'shown.bs.collapse' Event aus, welches das Pad perfekt lädt
+                bsCollapse.show();
             }
         } else if (userPin !== null) {
             alert("Falsche PIN! Zugriff verweigert.");
@@ -231,23 +258,79 @@
 
     async function loadEinsaetze() {
         const select = document.getElementById('einsatz_select');
+        const adminList = document.getElementById('admin-einsatz-list');
+
         try {
             const res = await fetch(GOOGLE_SCRIPT_URL);
             loadedEinsaetze = await res.json();
 
             select.innerHTML = '';
-            if (!Array.isArray(loadedEinsaetze) || loadedEinsaetze.length === 0) {
-                select.innerHTML = '<option value="" disabled selected>Keine Einsätze in der Cloud vorhanden - bitte erst oben anlegen!</option>';
-                return;
+            const sichtbareEinsaetze = loadedEinsaetze.filter(e => e.sichtbar === true);
+
+            if (sichtbareEinsaetze.length === 0) {
+                select.innerHTML = '<option value="" disabled selected>Keine aktuellen Einsätze verfügbar</option>';
+            } else {
+                select.innerHTML = '<option value="" selected disabled>-- Bitte Einsatz auswählen --</option>';
+                loadedEinsaetze.forEach((e, idx) => {
+                    if (e.sichtbar === true) {
+                        select.innerHTML += `<option value="${idx}">${e.datum || 'Datum'} | ${e.stichwort || 'Einsatz'} (${e.beginn || '?'} - ${e.ende || '?'} Uhr)</option>`;
+                    }
+                });
             }
 
-            select.innerHTML = '<option value="" selected disabled>-- Bitte Einsatz auswählen --</option>';
-            loadedEinsaetze.forEach((e, idx) => {
-                select.innerHTML += `<option value="${idx}">${e.datum || 'Datum'} | ${e.stichwort || 'Einsatz'} (${e.beginn || '?'} - ${e.ende || '?'} Uhr)</option>`;
-            });
+            if (adminList) {
+                adminList.innerHTML = '';
+                if (!Array.isArray(loadedEinsaetze) || loadedEinsaetze.length === 0) {
+                    adminList.innerHTML = '<p class="text-muted small">Keine Einsätze in der Datenbank.</p>';
+                } else {
+                    loadedEinsaetze.forEach((e, idx) => {
+                        const isVisible = e.sichtbar === true;
+                        adminList.innerHTML += `
+                            <div class="einsatz-item">
+                                <div>
+                                    <strong>${e.datum}</strong> - ${e.stichwort}<br>
+                                    <small class="text-muted">Ort: ${e.ort} | ${e.einsatzleiter}</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="switch_${e.id}" ${isVisible ? 'checked' : ''} onchange="toggleVisibility('${e.id}', this.checked)">
+                                    <label class="form-check-label small fw-bold ${isVisible ? 'text-success' : 'text-danger'}" id="label_${e.id}">
+                                        ${isVisible ? 'Sichtbar' : 'Ausgeblendet'}
+                                    </label>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            }
+
         } catch (err) {
             console.error(err);
             select.innerHTML = '<option value="" disabled selected>Fehler beim Laden der Einsätze</option>';
+            if (adminList) adminList.innerHTML = '<p class="text-danger small">Fehler beim Laden der Einsätze.</p>';
+        }
+    }
+
+    async function toggleVisibility(id, newStatus) {
+        const label = document.getElementById(`label_${id}`);
+        if(label) {
+            label.innerText = newStatus ? 'Sichtbar' : 'Ausgeblendet';
+            label.className = `form-check-label small fw-bold ${newStatus ? 'text-success' : 'text-danger'}`;
+        }
+
+        try {
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: "TOGGLE_SICHTBAR",
+                    id: id,
+                    sichtbar: newStatus
+                })
+            });
+            setTimeout(loadEinsaetze, 800);
+        } catch (err) {
+            alert("Fehler beim Aktualisieren: " + err);
         }
     }
 
@@ -257,11 +340,12 @@
         const ort = document.getElementById('el_ort').value.trim();
         const beginn = document.getElementById('el_beginn').value;
         const ende = document.getElementById('el_ende').value;
-        const einsatzleiter = document.getElementById('el_leiter').value.trim();
+        const dienstgrad = document.getElementById('el_dienstgrad').value;
+        const name = document.getElementById('el_name').value.trim();
         const beschreibung = document.getElementById('el_beschreibung').value.trim();
 
-        if (!datum || !stichwort || !ort || !beginn || !ende || !einsatzleiter) {
-            alert('Bitte alle Pflichtfelder für den Einsatz ausfüllen!');
+        if (!datum || !stichwort || !ort || !beginn || !ende || !name) {
+            alert('Bitte alle Pflichtfelder und den Namen ausfüllen!');
             return;
         }
 
@@ -270,6 +354,7 @@
             return;
         }
 
+        const einsatzleiter = `${dienstgrad} ${name}`;
         const signature = signaturePad.toDataURL('image/png');
 
         const btn = evt.target;
@@ -294,10 +379,10 @@
                 })
             });
 
-            alert('Einsatz wurde erfolgreich freigegeben und in Google Sheets gespeichert!');
+            alert('Einsatz wurde erfolgreich freigegeben und ist sofort für die Mannschaft sichtbar!');
             document.getElementById('einsatzForm').reset();
+            document.getElementById('el_datum').valueAsDate = new Date();
             resetSignature();
-            if (bsCollapse) bsCollapse.hide();
             loadEinsaetze();
 
         } catch (err) {
@@ -318,7 +403,7 @@
         }
 
         if (!loadedEinsaetze || !loadedEinsaetze[einsatzIdx]) {
-            alert('Fehler: Bitte wähle einen gültigen Einsatz aus der Liste aus.');
+            alert('Fehler: Bitte wähle einen gültigen Einsatz aus.');
             return;
         }
 
@@ -332,16 +417,7 @@
             doc.setFillColor(220, 53, 69);
             doc.rect(14, 12, 182, 3, 'F');
 
-            // Platzhalter Wappen Krugzell
-            doc.setDrawColor(200, 200, 200);
-            doc.setFillColor(245, 245, 245);
-            doc.rect(165, 18, 31, 31, 'FD');
-            doc.setFontSize(8);
-            doc.setTextColor(120, 120, 120);
-            doc.text('Wappen', 174, 33, {align: 'center'});
-            doc.text('Krugzell', 174, 37, {align: 'center'});
-
-            // Titel
+            // Titel Briefkopf
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(18);
             doc.setTextColor(220, 53, 69);
@@ -353,13 +429,13 @@
 
             doc.setLineWidth(0.5);
             doc.setDrawColor(200, 200, 200);
-            doc.line(14, 53, 196, 53);
+            doc.line(14, 38, 196, 38);
 
             // Einsatzbestätigung Text
             doc.setFontSize(11);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(40, 40, 40);
-            doc.text(`Herr/Frau ${memberName} war am ${e.datum || ''} für die FFW Krugzell im Einsatz.`, 14, 62);
+            doc.text(`Herr ${memberName} war am ${e.datum || ''} für die FFW Krugzell im Einsatz.`, 14, 48);
 
             // Einsatzdetails
             doc.setFontSize(10);
@@ -372,7 +448,7 @@
                 ['Beschreibung:', e.beschreibung || 'Keine zusätzliche Beschreibung hinterlegt.']
             ];
 
-            let y = 74;
+            let y = 60;
             details.forEach(row => {
                 doc.setFont('helvetica', 'bold');
                 doc.text(row[0], 14, y);
@@ -411,7 +487,7 @@
 
             y += 5;
             doc.setFont('helvetica', 'bold');
-            doc.text(e.einsatzleiter || 'Einsatzleiter', 14, y);
+            doc.text(e.einsatzleiter || 'Führungskraft', 14, y);
             y += 5;
             doc.setFont('helvetica', 'normal');
             doc.text('Einsatzleiter / FFW Krugzell', 14, y);
