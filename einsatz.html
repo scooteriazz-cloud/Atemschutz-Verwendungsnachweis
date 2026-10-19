@@ -111,9 +111,18 @@
                         <div class="form-text small">Du kannst einen Namen aus der Liste wählen oder direkt frei eintippen.</div>
                     </div>
 
-                    <button type="button" class="btn btn-danger w-100 fw-bold py-2 mt-2" onclick="generatePDF()">
+                    <button type="button" id="btn_generate_pdf" class="btn btn-danger w-100 fw-bold py-2 mt-2" onclick="generatePDF()">
                         📥 Einsatznachweis als PDF herunterladen
                     </button>
+
+                    <!-- Erfolgsanzeige & Link für Smartphones -->
+                    <div id="pdf_success_box" class="alert alert-success mt-3 d-none text-center" role="alert">
+                        ✅ <strong>PDF erfolgreich erstellt!</strong><br>
+                        <span class="small">Der Download sollte automatisch starten. Falls nicht, klicke hier:</span><br>
+                        <a id="pdf_download_link" href="#" target="_blank" class="btn btn-sm btn-outline-success fw-bold mt-2">
+                            📄 PDF manuell öffnen / herunterladen
+                        </a>
+                    </div>
                 </form>
             </div>
         </div>
@@ -457,6 +466,9 @@
         const einsatzIdx = document.getElementById('einsatz_select').value;
         const salutation = document.getElementById('salutation_select').value;
         const memberName = document.getElementById('member_name_input').value.trim();
+        const btn = document.getElementById('btn_generate_pdf');
+        const successBox = document.getElementById('pdf_success_box');
+        const downloadLink = document.getElementById('pdf_download_link');
 
         if (einsatzIdx === "" || einsatzIdx === null) {
             alert('Bitte wähle oben einen Einsatz aus!');
@@ -473,118 +485,131 @@
             return;
         }
 
+        // Button-Status ändern
+        btn.disabled = true;
+        btn.innerHTML = '⏳ PDF wird erstellt...';
+
         const e = loadedEinsaetze[einsatzIdx];
         const datumDE = formatDateDE(e.datum);
         const beginnClean = formatTime(e.beginn);
         const endeClean = formatTime(e.ende);
 
-        try {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4');
+        setTimeout(() => {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
 
-            // Kopfzeile & Dekoration
-            doc.setFillColor(220, 53, 69);
-            doc.rect(14, 12, 182, 3, 'F');
+                // Kopfzeile & Dekoration
+                doc.setFillColor(220, 53, 69);
+                doc.rect(14, 12, 182, 3, 'F');
 
-            // Titel Briefkopf
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(18);
-            doc.setTextColor(220, 53, 69);
-            doc.text('Freiwillige Feuerwehr Krugzell', 14, 23);
-
-            doc.setFontSize(10);
-            doc.setTextColor(100, 100, 100);
-            doc.text('Gemeinde Altusried | Landkreis Oberallgäu', 14, 29);
-
-            doc.setLineWidth(0.5);
-            doc.setDrawColor(200, 200, 200);
-            doc.line(14, 38, 196, 38);
-
-            // Einsatzbestätigung Text
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(40, 40, 40);
-            doc.text(`${salutation} ${memberName} war am ${datumDE} für die FFW Krugzell im Einsatz.`, 14, 48);
-
-            // Einsatzdetails
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            
-            const details = [
-                ['Alarmzeit / Einsatzende:', `${datumDE}, ${beginnClean} - ${endeClean} Uhr`],
-                ['Einsatztyp / -stichwort:', e.stichwort || 'Feuerwehreinsatz'],
-                ['Einsatzort:', e.ort || 'Krugzell'],
-                ['Beschreibung:', e.beschreibung || 'Keine zusätzliche Beschreibung hinterlegt.']
-            ];
-
-            let y = 60;
-            details.forEach(row => {
+                // Titel Briefkopf
                 doc.setFont('helvetica', 'bold');
-                doc.text(row[0], 14, y);
+                doc.setFontSize(18);
+                doc.setTextColor(220, 53, 69);
+                doc.text('Freiwillige Feuerwehr Krugzell', 14, 23);
+
+                doc.setFontSize(10);
+                doc.setTextColor(100, 100, 100);
+                doc.text('Gemeinde Altusried | Landkreis Oberallgäu', 14, 29);
+
+                doc.setLineWidth(0.5);
+                doc.setDrawColor(200, 200, 200);
+                doc.line(14, 38, 196, 38);
+
+                // Einsatzbestätigung Text
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(40, 40, 40);
+                doc.text(`${salutation} ${memberName} war am ${datumDE} für die FFW Krugzell im Einsatz.`, 14, 48);
+
+                // Einsatzdetails
+                doc.setFontSize(10);
                 doc.setFont('helvetica', 'normal');
-                doc.text(String(row[1]), 65, y, {maxWidth: 130});
-                y += (row[0] === 'Beschreibung:' ? 14 : 8);
-            });
+                
+                const details = [
+                    ['Alarmzeit / Einsatzende:', `${datumDE}, ${beginnClean} - ${endeClean} Uhr`],
+                    ['Einsatztyp / -stichwort:', e.stichwort || 'Feuerwehreinsatz'],
+                    ['Einsatzort:', e.ort || 'Krugzell'],
+                    ['Beschreibung:', e.beschreibung || 'Keine zusätzliche Beschreibung hinterlegt.']
+                ];
 
-            // Rechtlicher Hinweistext
-            y += 10;
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'italic');
-            doc.setTextColor(80, 80, 80);
-            const rechtstext = "Hinweis: Gemäß Art. 9 Abs. 1 BayFwG dürfen Arbeitnehmern aus dem Dienst in der Feuerwehr keine Nachteile im Arbeitsverhältnis entstehen. Während der Dauer des Dienstes sowie einer angemessenen Erholungszeit besteht Anspruch auf Freistellung von der Arbeit.";
-            const splitText = doc.splitTextToSize(rechtstext, 182);
-            doc.text(splitText, 14, y);
+                let y = 60;
+                details.forEach(row => {
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(row[0], 14, y);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(String(row[1]), 65, y, {maxWidth: 130});
+                    y += (row[0] === 'Beschreibung:' ? 14 : 8);
+                });
 
-            // Unterschriftenbereich
-            y += (splitText.length * 4) + 20;
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(40, 40, 40);
-            doc.text(`Krugzell, den ${datumDE}`, 14, y);
+                // Rechtlicher Hinweistext
+                y += 10;
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'italic');
+                doc.setTextColor(80, 80, 80);
+                const rechtstext = "Hinweis: Gemäß Art. 9 Abs. 1 BayFwG dürfen Arbeitnehmern aus dem Dienst in der Feuerwehr keine Nachteile im Arbeitsverhältnis entstehen. Während der Dauer des Dienstes sowie einer angemessenen Erholungszeit besteht Anspruch auf Freistellung von der Arbeit.";
+                const splitText = doc.splitTextToSize(rechtstext, 182);
+                doc.text(splitText, 14, y);
 
-            y += 6;
-            if (e.signature && e.signature.startsWith('data:image')) {
-                try {
-                    doc.addImage(e.signature, 'PNG', 14, y, 45, 18);
-                } catch(err) { console.log('Signatur konnte nicht geladen werden', err); }
+                // Unterschriftenbereich
+                y += (splitText.length * 4) + 20;
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(40, 40, 40);
+                doc.text(`Krugzell, den ${datumDE}`, 14, y);
+
+                y += 6;
+                if (e.signature && e.signature.startsWith('data:image')) {
+                    try {
+                        doc.addImage(e.signature, 'PNG', 14, y, 45, 18);
+                    } catch(err) { console.log('Signatur konnte nicht geladen werden', err); }
+                }
+
+                y += 20;
+                doc.setLineWidth(0.3);
+                doc.setDrawColor(150, 150, 150);
+                doc.line(14, y, 75, y);
+
+                y += 5;
+                doc.setFont('helvetica', 'bold');
+                doc.text(e.einsatzleiter || 'Führungskraft', 14, y);
+                y += 5;
+                doc.setFont('helvetica', 'normal');
+                doc.text('Einsatzleiter / FFW Krugzell', 14, y);
+
+                // MOBIL-KOMPATIBLER DOWNLOAD & ERFOLGSANZEIGE
+                const cleanName = memberName.replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, '_');
+                const fileName = `Einsatzbestaetigung_${cleanName}.pdf`;
+
+                const blob = doc.output('blob');
+                const blobUrl = URL.createObjectURL(blob);
+
+                // Link für manuellen Download/Öffnen vorbereiten
+                downloadLink.href = blobUrl;
+                downloadLink.download = fileName;
+                successBox.classList.remove('d-none');
+
+                // Automatischen Download ausführen
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Fallback für Pop-up-Blocker auf Mobilgeräten
+                setTimeout(() => {
+                    window.open(blobUrl, '_blank');
+                }, 300);
+
+            } catch (err) {
+                alert('Fehler bei der PDF-Erstellung: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '📥 Einsatznachweis als PDF herunterladen';
             }
-
-            y += 20;
-            doc.setLineWidth(0.3);
-            doc.setDrawColor(150, 150, 150);
-            doc.line(14, y, 75, y);
-
-            y += 5;
-            doc.setFont('helvetica', 'bold');
-            doc.text(e.einsatzleiter || 'Führungskraft', 14, y);
-            y += 5;
-            doc.setFont('helvetica', 'normal');
-            doc.text('Einsatzleiter / FFW Krugzell', 14, y);
-
-            // MOBIL-KOMPATIBLER DOWNLOAD & ÖFFNEN
-            const cleanName = memberName.replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, '_');
-            const fileName = `Einsatzbestaetigung_${cleanName}.pdf`;
-
-            // Erzeuge Blob URL für Smartphones
-            const blob = doc.output('blob');
-            const blobUrl = URL.createObjectURL(blob);
-
-            // Versuche erst den direkten Download über einen unsichtbaren Link
-            const link = document.createElement('a');
-            link.href = blobUrl;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            // Fallback für iOS / Safari: Öffne das PDF zusätzlich in einem neuen Tab
-            setTimeout(() => {
-                window.open(blobUrl, '_blank');
-            }, 300);
-
-        } catch (err) {
-            alert('Fehler bei der PDF-Erstellung: ' + err.message);
-        }
+        }, 150);
     }
 </script>
 </body>
