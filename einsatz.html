@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Einsatzbestätigung - Feuerwehr Krugzell</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- External JS Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+
+    <style>
+        body { background-color: #f8f9fa; }
+        .form-container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .section-header {
+            border-bottom: 2px solid #dc3545;
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+            color: #dc3545;
+        }
+        #signature-pad {
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            cursor: crosshair;
+            width: 100%;
+            height: 150px;
+            background-color: #fff;
+        }
+        .admin-box {
+            background-color: #fff3cd;
+            border: 1px solid #ffe69c;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="form-container">
+        
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <h2 class="fw-bold">🚒 Feuerwehr Krugzell</h2>
+            <h4>Bescheinigung über Einsatzteilnahme</h4>
+            <p class="text-muted small">Gemäß Art. 9 Abs. 1 BayFwG zur Vorlage beim Arbeitgeber</p>
+        </div>
+
+        <!-- BEREICH 1: FÜR DIE MANNSCHAFT (Einsatznachweis herunterladen) -->
+        <div class="card mb-4 border-danger">
+            <div class="card-header bg-danger text-white fw-bold fs-5">
+                📄 Einsatzbescheinigung herunterladen
+            </div>
+            <div class="card-body">
+                <form id="downloadForm" onsubmit="return false;">
+                    <div class="mb-3">
+                        <label for="einsatz_select" class="form-label fw-bold">1. Einsatz auswählen</label>
+                        <select class="form-select form-select-lg" id="einsatz_select" required>
+                            <option value="" selected disabled>Lade Einsätze...</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="member_select" class="form-label fw-bold">2. Name der Einsatzkraft</label>
+                        <select class="form-select form-select-lg" id="member_select" required>
+                            <option value="" selected disabled>-- Bitte Namen auswählen --</option>
+                            <option value="Thomas Berger">Thomas Berger</option>
+                            <option value="Stefan Hafner">Stefan Hafner</option>
+                            <option value="Simon Maier">Simon Maier</option>
+                            <option value="Christoph Schilling">Christoph Schilling</option>
+                            <option value="Stefan Brauner">Stefan Brauner</option>
+                            <option value="Florian Schilling">Florian Schilling</option>
+                            <option value="Oliver Bader">Oliver Bader</option>
+                            <option value="Daniel Linortner">Daniel Linortner</option>
+                            <option value="Marvin Schleich">Marvin Schleich</option>
+                            <option value="Markus Hafner">Markus Hafner</option>
+                            <option value="Hans-Jörg Heubuch">Hans-Jörg Heubuch</option>
+                            <option value="Thomas Bader">Thomas Bader</option>
+                            <option value="Fabian Krattenmacher">Fabian Krattenmacher</option>
+                            <option value="Tim Misterek">Tim Misterek</option>
+                            <option value="Michael Hafner">Michael Hafner</option>
+                            <option value="Christoph Waldmann">Christoph Waldmann</option>
+                            <option value="Dieter Pflaum">Dieter Pflaum</option>
+                            <option value="Michael Kiesel">Michael Kiesel</option>
+                            <option value="Peter Hiemer">Peter Hiemer</option>
+                        </select>
+                    </div>
+
+                    <button type="button" class="btn btn-danger btn-lg w-100 fw-bold py-3 mt-2" onclick="generatePDF()">
+                        📥 Einsatznachweis als PDF herunterladen
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- BEREICH 2: FÜR DEN EINSATZLEITER / GRUPPENFÜHRER (Geschützt per PIN 1873) -->
+        <div class="mt-5 text-center">
+            <button class="btn btn-outline-secondary btn-sm" type="button" onclick="checkPinAndUnlock()">
+                🔒 Nur für Führungskräfte: Neuen Einsatz anlegen
+            </button>
+        </div>
+
+        <div class="collapse mt-3" id="adminSection">
+            <div class="admin-box">
+                <h5 class="fw-bold text-dark mb-3">➕ Neuen Einsatz zur Auswahl hinzufügen</h5>
+                <form id="einsatzForm" onsubmit="return false;">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label for="el_datum" class="form-label fw-bold">Datum</label>
+                            <input type="date" class="form-control" id="el_datum" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="el_stichwort" class="form-label fw-bold">Einsatzstichwort</label>
+                            <input type="text" class="form-control" id="el_stichwort" placeholder="z. B. THL GROBTIERRETTUNG" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="el_ort" class="form-label fw-bold">Einsatzort</label>
+                            <input type="text" class="form-control" id="el_ort" placeholder="z. B. Iller / Krugzell" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label for="el_beginn" class="form-label fw-bold">Alarmzeit (Beginn)</label>
+                            <input type="time" class="form-control" id="el_beginn" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="el_ende" class="form-label fw-bold">Einsatzende</label>
+                            <input type="time" class="form-control" id="el_ende" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="el_leiter" class="form-label fw-bold">Einsatzleiter / Gruppenführer</label>
+                            <input type="text" class="form-control" id="el_leiter" placeholder="z. B. Stefan Renger" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="el_beschreibung" class="form-label fw-bold">Beschreibung / Details (optional)</label>
+                        <textarea class="form-control" id="el_beschreibung" rows="2" placeholder="z. B. Tier Rettung Großtier (Kuh in Iller)"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Unterschrift der Führungskraft</label>
+                        <canvas id="signature-pad"></canvas>
+                        <div class="mt-1 text-end">
+                            <button type="button" class="btn btn-sm btn-link text-danger" onclick="signaturePad.clear()">Unterschrift zurücksetzen</button>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-success btn-lg w-100 fw-bold" onclick="saveEinsatz(event)">
+                        💾 Einsatz freigeben & speichern
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz0ww2oRsOMFG1IoGND-ZtI1Uv7foUES5KhGKRfa5hDq6_PIz8vzIu-e_82p1_QZTxqOQ/exec";
+    const EINSATZLEITER_PIN = "1873";
+    
+    let loadedEinsaetze = [];
+    let signaturePad = null;
+    let bsCollapse = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById('el_datum').valueAsDate = new Date();
+
+        const canvas = document.getElementById('signature-pad');
+        if (canvas) {
+            signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
+            function resizeCanvas() {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                canvas.width = canvas.offsetWidth * ratio;
+                canvas.height = canvas.offsetHeight * ratio;
+                canvas.getContext("2d").scale(ratio, ratio);
+            }
+            window.addEventListener("resize", resizeCanvas);
+            resizeCanvas();
+        }
+
+        const collapseElement = document.getElementById('adminSection');
+        if (collapseElement) {
+            bsCollapse = new bootstrap.Collapse(collapseElement, { toggle: false });
+        }
+
+        loadEinsaetze();
+    });
+
+    function checkPinAndUnlock() {
+        const userPin = prompt("Bitte PIN für den Einsatzleiter- / Gruppenführer-Bereich eingeben:");
+        if (userPin === EINSATZLEITER_PIN) {
+            if (bsCollapse) {
+                bsCollapse.show();
+            }
+        } else if (userPin !== null) {
+            alert("Falsche PIN! Zugriff verweigert.");
+        }
+    }
+
+    async function loadEinsaetze() {
+        const select = document.getElementById('einsatz_select');
+        try {
+            const res = await fetch(GOOGLE_SCRIPT_URL);
+            loadedEinsaetze = await res.json();
+
+            select.innerHTML = '';
+            if (!Array.isArray(loadedEinsaetze) || loadedEinsaetze.length === 0) {
+                select.innerHTML = '<option value="" disabled selected>Keine aktuellen Einsätze vorhanden</option>';
+                return;
+            }
+
+            select.innerHTML = '<option value="" selected disabled>-- Bitte Einsatz auswählen --</option>';
+            loadedEinsaetze.forEach((e, idx) => {
+                select.innerHTML += `<option value="${idx}">${e.datum} | ${e.stichwort} (${e.beginn} - ${e.ende} Uhr)</option>`;
+            });
+        } catch (err) {
+            select.innerHTML = '<option value="" disabled selected>Fehler beim Laden der Einsätze</option>';
+        }
+    }
+
+    async function saveEinsatz(evt) {
+        const datum = document.getElementById('el_datum').value;
+        const stichwort = document.getElementById('el_stichwort').value.trim();
+        const ort = document.getElementById('el_ort').value.trim();
+        const beginn = document.getElementById('el_beginn').value;
+        const ende = document.getElementById('el_ende').value;
+        const einsatzleiter = document.getElementById('el_leiter').value.trim();
+        const beschreibung = document.getElementById('el_beschreibung').value.trim();
+
+        if (!datum || !stichwort || !ort || !beginn || !ende || !einsatzleiter) {
+            alert('Bitte alle Pflichtfelder für den Einsatz ausfüllen!');
+            return;
+        }
+
+        if (signaturePad && signaturePad.isEmpty()) {
+            alert('Bitte als Einsatzleiter/Gruppenführer unterschreiben!');
+            return;
+        }
+
+        const signature = signaturePad.toDataURL('image/png');
+
+        const btn = evt.target;
+        btn.disabled = true;
+        btn.innerText = 'Speichere...';
+
+        try {
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: "ADD_EINSATZ",
+                    datum: datum,
+                    stichwort: stichwort,
+                    ort: ort,
+                    beginn: beginn,
+                    ende: ende,
+                    einsatzleiter: einsatzleiter,
+                    beschreibung: beschreibung,
+                    signature: signature
+                })
+            });
+
+            alert('Einsatz wurde erfolgreich freigegeben! Die Mannschaft kann die Bescheinigung ab sofort abrufen.');
+            document.getElementById('einsatzForm').reset();
+            if (signaturePad) signaturePad.clear();
+            
+            if (bsCollapse) bsCollapse.hide();
+            loadEinsaetze();
+
+        } catch (err) {
+            alert('Fehler beim Speichern: ' + err);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = '💾 Einsatz freigeben & speichern';
+        }
+    }
+
+    function generatePDF() {
+        const einsatzIdx = document.getElementById('einsatz_select').value;
+        const memberName = document.getElementById('member_select').value;
+
+        if (einsatzIdx === "" || !memberName) {
+            alert('Bitte wähle einen Einsatz und deinen Namen aus!');
+            return;
+        }
+
+        const e = loadedEinsaetze[einsatzIdx];
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+
+        // Layout & Briefkopf mit Wappen-Platzhalter
+        doc.setFillColor(220, 53, 69);
+        doc.rect(14, 12, 182, 3, 'F');
+
+        // Wappen-Platzhalter oben rechts
+        doc.setDrawColor(200, 200, 200);
+        doc.setFillColor(245, 245, 245);
+        doc.rect(165, 18, 31, 31, 'FD');
+        doc.setFontSize(8);
+        doc.setTextColor(120, 120, 120);
+        doc.text('Wappen', 174, 33, {align: 'center'});
+        doc.text('Krugzell', 174, 37, {align: 'center'});
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
+        doc.setTextColor(220, 53, 69);
+        doc.text('Freiwillige Feuerwehr Krugzell', 14, 23);
+
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Gemeinde Altusried | Landkreis Oberallgäu', 14, 29);
+
+        doc.setLineWidth(0.5);
+        doc.setDrawColor(200, 200, 200);
+        doc.line(14, 53, 196, 53);
+
+        // Einleitungssatz
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(40, 40, 40);
+        doc.text(`Herr/Frau ${memberName} war am ${e.datum} für die FFW Krugzell im Einsatz.`, 14, 62);
+
+        // Einsatzdetails
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        
+        const details = [
+            ['Alarmzeit / Einsatzende:', `${e.datum}, ${e.beginn} - ${e.ende} Uhr`],
+            ['Einsatztyp / -stichwort:', e.stichwort],
+            ['Einsatzort:', e.ort],
+            ['Beschreibung:', e.beschreibung || 'Keine zusätzliche Beschreibung hinterlegt.']
+        ];
+
+        let y = 74;
+        details.forEach(row => {
+            doc.setFont('helvetica', 'bold');
+            doc.text(row[0], 14, y);
+            doc.setFont('helvetica', 'normal');
+            doc.text(row[1], 65, y, {maxWidth: 130});
+            y += (row[0] === 'Beschreibung:' ? 14 : 8);
+        });
+
+        // Rechtlicher Hinweis (Art. 9 BayFwG)
+        y += 10;
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(80, 80, 80);
+        const rechtstext = "Hinweis: Gemäß Art. 9 Abs. 1 BayFwG dürfen Arbeitnehmern aus dem Dienst in der Feuerwehr keine Nachteile im Arbeitsverhältnis entstehen. Während der Dauer des Dienstes sowie einer angemessenen Erholungszeit besteht Anspruch auf Freistellung von der Arbeit.";
+        const splitText = doc.splitTextToSize(rechtstext, 182);
+        doc.text(splitText, 14, y);
+
+        // Unterschriftenblock
+        y += (splitText.length * 4) + 20;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(40, 40, 40);
+        doc.text(`Krugzell, den ${e.datum}`, 14, y);
+
+        y += 6;
+        if (e.signature) {
+            doc.addImage(e.signature, 'PNG', 14, y, 45, 18);
+        }
+
+        y += 20;
+        doc.setLineWidth(0.3);
+        doc.setDrawColor(150, 150, 150);
+        doc.line(14, y, 75, y);
+
+        y += 5;
+        doc.setFont('helvetica', 'bold');
+        doc.text(e.einsatzleiter, 14, y);
+        y += 5;
+        doc.setFont('helvetica', 'normal');
+        doc.text('Einsatzleiter / FFW Krugzell', 14, y);
+
+        // Download auslösen
+        const filename = `Einsatzbestaetigung_${e.datum}_${memberName.replace(/\s+/g, '_')}.pdf`;
+        doc.save(filename);
+    }
+</script>
+</body>
+</html>
