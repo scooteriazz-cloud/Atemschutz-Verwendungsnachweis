@@ -259,17 +259,6 @@
         }
     }
 
-    // Hilfsfunktion: Filtert saubere Uhrzeiten (z.B. "15:00") aus langen Google-Datumsstrings heraus
-    function formatTime(timeStr) {
-        if (!timeStr) return '?';
-        const str = String(timeStr);
-        const match = str.match(/\d{2}:\d{2}/);
-        if (match) {
-            return match[0];
-        }
-        return str;
-    }
-
     function formatDateDE(isoDateStr) {
         if (!isoDateStr) return '';
         const parts = isoDateStr.split('-');
@@ -301,9 +290,7 @@
                 loadedEinsaetze.forEach((e, idx) => {
                     if (e.sichtbar === true) {
                         const datumDE = formatDateDE(e.datum);
-                        const beginnClean = formatTime(e.beginn);
-                        const endeClean = formatTime(e.ende);
-                        select.innerHTML += `<option value="${idx}">${datumDE} | ${e.stichwort} (${beginnClean} - ${endeClean} Uhr)</option>`;
+                        select.innerHTML += `<option value="${idx}">${datumDE} | ${e.stichwort} (${e.beginn} - ${e.ende} Uhr)</option>`;
                     }
                 });
             }
@@ -464,8 +451,6 @@
 
         const e = loadedEinsaetze[einsatzIdx];
         const datumDE = formatDateDE(e.datum);
-        const beginnClean = formatTime(e.beginn);
-        const endeClean = formatTime(e.ende);
 
         try {
             const { jsPDF } = window.jspdf;
@@ -500,7 +485,7 @@
             doc.setFont('helvetica', 'normal');
             
             const details = [
-                ['Alarmzeit / Einsatzende:', `${datumDE}, ${beginnClean} - ${endeClean} Uhr`],
+                ['Alarmzeit / Einsatzende:', `${datumDE}, ${e.beginn} - ${e.ende} Uhr`],
                 ['Einsatztyp / -stichwort:', e.stichwort || 'Feuerwehreinsatz'],
                 ['Einsatzort:', e.ort || 'Krugzell'],
                 ['Beschreibung:', e.beschreibung || 'Keine zusätzliche Beschreibung hinterlegt.']
