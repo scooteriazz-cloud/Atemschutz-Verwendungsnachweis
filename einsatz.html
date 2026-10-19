@@ -22,19 +22,13 @@
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        .section-header {
-            border-bottom: 2px solid #dc3545;
-            padding-bottom: 5px;
-            margin-bottom: 20px;
-            color: #dc3545;
-        }
         #signature-pad {
-            border: 2px dashed #ccc;
+            border: 2px dashed #dc3545;
             border-radius: 5px;
             cursor: crosshair;
             width: 100%;
-            height: 150px;
-            background-color: #fff;
+            height: 180px;
+            background-color: #ffffff;
         }
         .admin-box {
             background-color: #fff3cd;
@@ -152,13 +146,15 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Unterschrift der Führungskraft</label>
-                        <canvas id="signature-pad"></canvas>
-                        <div class="mt-1 text-end">
-                            <button type="button" class="btn btn-sm btn-link text-danger" onclick="if(signaturePad) signaturePad.clear()">Unterschrift zurücksetzen</button>
+                        <div>
+                            <canvas id="signature-pad"></canvas>
+                        </div>
+                        <div class="mt-2 text-end">
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="resetSignature()">Unterschrift löschen</button>
                         </div>
                     </div>
 
-                    <button type="button" class="btn btn-success btn-lg w-100 fw-bold" onclick="saveEinsatz(event)">
+                    <button type="button" class="btn btn-success btn-lg w-100 fw-bold py-3 mt-2" onclick="saveEinsatz(event)">
                         💾 Einsatz freigeben & speichern
                     </button>
                 </form>
@@ -184,30 +180,49 @@
         const collapseElement = document.getElementById('adminSection');
         if (collapseElement) {
             bsCollapse = new bootstrap.Collapse(collapseElement, { toggle: false });
+            
+            // WICHTIG: Erst initialisieren, wenn das Akkordeon auf dem Laptop komplett sichtbar ist!
+            collapseElement.addEventListener('shown.bs.collapse', function () {
+                initSignaturePad();
+            });
         }
 
         loadEinsaetze();
     });
 
+    function initSignaturePad() {
+        const canvas = document.getElementById('signature-pad');
+        if (!canvas) return;
+
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = 180 * ratio;
+        const ctx = canvas.getContext("2d");
+        ctx.scale(ratio, ratio);
+
+        if (!signaturePad) {
+            signaturePad = new SignaturePad(canvas, {
+                backgroundColor: 'rgb(255, 255, 255)',
+                penColor: 'rgb(0, 0, 128)',
+                minWidth: 1.5,
+                maxWidth: 3.5
+            });
+        } else {
+            signaturePad.clear();
+        }
+    }
+
+    function resetSignature() {
+        if (signaturePad) {
+            signaturePad.clear();
+        }
+    }
+
     function checkPinAndUnlock() {
-        const userPin = prompt("Bitte PIN für den Einsatzleiter- / Gruppenführer-Bereich eingeben (PIN: 1873):");
+        const userPin = prompt("Bitte PIN für den Führungskräfte-Bereich eingeben:");
         if (userPin === EINSATZLEITER_PIN) {
             if (bsCollapse) {
-                bsCollapse.show();
-                // Erst initialisieren, wenn der Bereich sichtbar ist (damit die Pixel-Größe stimmt)
-                setTimeout(() => {
-                    const canvas = document.getElementById('signature-pad');
-                    if (canvas && !signaturePad) {
-                        signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
-                    }
-                    if (canvas && signaturePad) {
-                        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                        canvas.width = canvas.offsetWidth * ratio;
-                        canvas.height = canvas.offsetHeight * ratio;
-                        canvas.getContext("2d").scale(ratio, ratio);
-                        signaturePad.clear();
-                    }
-                }, 150);
+                bsCollapse.show(); // Löst das 'shown.bs.collapse' Event aus, welches das Pad perfekt lädt
             }
         } else if (userPin !== null) {
             alert("Falsche PIN! Zugriff verweigert.");
@@ -218,12 +233,11 @@
         const select = document.getElementById('einsatz_select');
         try {
             const res = await fetch(GOOGLE_SCRIPT_URL);
-            if (!res.ok) throw new Error("Netzwerkfehler beim Laden");
             loadedEinsaetze = await res.json();
 
             select.innerHTML = '';
             if (!Array.isArray(loadedEinsaetze) || loadedEinsaetze.length === 0) {
-                select.innerHTML = '<option value="" disabled selected>Keine Einsätze in der Cloud gefunden</option>';
+                select.innerHTML = '<option value="" disabled selected>Keine Einsätze in der Cloud vorhanden - bitte erst oben anlegen!</option>';
                 return;
             }
 
@@ -233,7 +247,7 @@
             });
         } catch (err) {
             console.error(err);
-            select.innerHTML = '<option value="" disabled selected>Fehler beim Laden (Google Script Bereitstellung prüfen!)</option>';
+            select.innerHTML = '<option value="" disabled selected>Fehler beim Laden der Einsätze</option>';
         }
     }
 
@@ -252,7 +266,7 @@
         }
 
         if (!signaturePad || signaturePad.isEmpty()) {
-            alert('Bitte als Einsatzleiter/Gruppenführer im Unterschriftenfeld unterschreiben!');
+            alert('Bitte eine Unterschrift im Feld leisten!');
             return;
         }
 
@@ -260,7 +274,7 @@
 
         const btn = evt.target;
         btn.disabled = true;
-        btn.innerText = 'Speichere in Google Sheets...';
+        btn.innerText = 'Speichere...';
 
         try {
             await fetch(GOOGLE_SCRIPT_URL, {
@@ -280,10 +294,9 @@
                 })
             });
 
-            alert('Einsatz wurde erfolgreich freigegeben! Die Liste wird aktualisiert.');
+            alert('Einsatz wurde erfolgreich freigegeben und in Google Sheets gespeichert!');
             document.getElementById('einsatzForm').reset();
-            if (signaturePad) signaturePad.clear();
-            
+            resetSignature();
             if (bsCollapse) bsCollapse.hide();
             loadEinsaetze();
 
@@ -296,17 +309,16 @@
     }
 
     function generatePDF() {
-        const einsatzSelect = document.getElementById('einsatz_select');
-        const einsatzIdx = einsatzSelect.value;
+        const einsatzIdx = document.getElementById('einsatz_select').value;
         const memberName = document.getElementById('member_select').value;
 
-        if (einsatzIdx === "" || !memberName) {
+        if (einsatzIdx === "" || einsatzIdx === null || !memberName) {
             alert('Bitte wähle oben einen Einsatz und deinen Namen aus!');
             return;
         }
 
-        if (!loadedEinsaetze || loadedEinsaetze.length === 0 || !loadedEinsaetze[einsatzIdx]) {
-            alert('Fehler: Die Einsatzdaten konnten nicht ausgelesen werden. Bitte lade die Seite neu.');
+        if (!loadedEinsaetze || !loadedEinsaetze[einsatzIdx]) {
+            alert('Fehler: Bitte wähle einen gültigen Einsatz aus der Liste aus.');
             return;
         }
 
@@ -316,11 +328,11 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
 
-            // Layout & Briefkopf mit Wappen-Platzhalter
+            // Kopfzeile & Dekoration
             doc.setFillColor(220, 53, 69);
             doc.rect(14, 12, 182, 3, 'F');
 
-            // Wappen-Platzhalter oben rechts
+            // Platzhalter Wappen Krugzell
             doc.setDrawColor(200, 200, 200);
             doc.setFillColor(245, 245, 245);
             doc.rect(165, 18, 31, 31, 'FD');
@@ -329,6 +341,7 @@
             doc.text('Wappen', 174, 33, {align: 'center'});
             doc.text('Krugzell', 174, 37, {align: 'center'});
 
+            // Titel
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(18);
             doc.setTextColor(220, 53, 69);
@@ -342,7 +355,7 @@
             doc.setDrawColor(200, 200, 200);
             doc.line(14, 53, 196, 53);
 
-            // Einleitungssatz
+            // Einsatzbestätigung Text
             doc.setFontSize(11);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(40, 40, 40);
@@ -354,8 +367,8 @@
             
             const details = [
                 ['Alarmzeit / Einsatzende:', `${e.datum || ''}, ${e.beginn || ''} - ${e.ende || ''} Uhr`],
-                ['Einsatztyp / -stichwort:', e.stichwort || ''],
-                ['Einsatzort:', e.ort || ''],
+                ['Einsatztyp / -stichwort:', e.stichwort || 'Feuerwehreinsatz'],
+                ['Einsatzort:', e.ort || 'Krugzell'],
                 ['Beschreibung:', e.beschreibung || 'Keine zusätzliche Beschreibung hinterlegt.']
             ];
 
@@ -364,11 +377,11 @@
                 doc.setFont('helvetica', 'bold');
                 doc.text(row[0], 14, y);
                 doc.setFont('helvetica', 'normal');
-                doc.text(row[1], 65, y, {maxWidth: 130});
+                doc.text(String(row[1]), 65, y, {maxWidth: 130});
                 y += (row[0] === 'Beschreibung:' ? 14 : 8);
             });
 
-            // Rechtlicher Hinweis (Art. 9 BayFwG)
+            // Rechtlicher Hinweistext
             y += 10;
             doc.setFontSize(9);
             doc.setFont('helvetica', 'italic');
@@ -377,7 +390,7 @@
             const splitText = doc.splitTextToSize(rechtstext, 182);
             doc.text(splitText, 14, y);
 
-            // Unterschriftenblock
+            // Unterschriftenbereich
             y += (splitText.length * 4) + 20;
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
@@ -385,8 +398,10 @@
             doc.text(`Krugzell, den ${e.datum || ''}`, 14, y);
 
             y += 6;
-            if (e.signature) {
-                doc.addImage(e.signature, 'PNG', 14, y, 45, 18);
+            if (e.signature && e.signature.startsWith('data:image')) {
+                try {
+                    doc.addImage(e.signature, 'PNG', 14, y, 45, 18);
+                } catch(err) { console.log('Signatur konnte nicht geladen werden', err); }
             }
 
             y += 20;
@@ -401,13 +416,12 @@
             doc.setFont('helvetica', 'normal');
             doc.text('Einsatzleiter / FFW Krugzell', 14, y);
 
-            // Download auslösen
-            const filename = `Einsatzbestaetigung_${e.datum || 'Einsatz'}_${memberName.replace(/\s+/g, '_')}.pdf`;
-            doc.save(filename);
+            // PDF Herunterladen
+            const cleanName = memberName.replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, '_');
+            doc.save(`Einsatzbestaetigung_${cleanName}.pdf`);
 
-        } catch (pdfErr) {
-            console.error(pdfErr);
-            alert('Fehler beim Erstellen der PDF: ' + pdfErr.message);
+        } catch (err) {
+            alert('Fehler bei der PDF-Erstellung: ' + err.message);
         }
     }
 </script>
