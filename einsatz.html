@@ -41,11 +41,8 @@
             background: #fff;
             border: 1px solid #dee2e6;
             border-radius: 5px;
-            padding: 8px 12px;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 10px 12px;
+            margin-bottom: 12px;
         }
     </style>
 </head>
@@ -130,7 +127,7 @@
         <!-- BEREICH 2: FÜR FÜHRUNGSKRÄFTE (Geschützt per PIN) -->
         <div class="mt-4 text-center">
             <button class="btn btn-outline-secondary btn-sm" type="button" onclick="checkPinAndUnlock()">
-                🔒 Nur für Führungskräfte: Einsätze verwalten & neu anlegen
+                🔒 Nur für Führungskräfte: Einsätze verwalten & Downloads einsehen
             </button>
         </div>
 
@@ -199,9 +196,9 @@
 
                 <hr class="my-3">
 
-                <!-- Sektion zum Verwalten (Ausblenden & Löschen) -->
-                <h6 class="fw-bold text-dark mb-2">⚙️ Einsätze verwalten (Sichtbarkeit & Löschen)</h6>
-                <p class="text-muted small mb-2">Hier kannst du Einsätze für die Mannschaft ausblenden oder fehlerhafte Einträge komplett löschen:</p>
+                <!-- Sektion zum Verwalten & Download-Tracking -->
+                <h6 class="fw-bold text-dark mb-2">⚙️ Einsätze verwalten & Download-Nachweise</h6>
+                <p class="text-muted small mb-2">Hier siehst du, wer sich bereits eine Bescheinigung heruntergeladen hat:</p>
                 <div id="admin-einsatz-list">
                     <p class="text-muted small">Lade Einsätze...</p>
                 </div>
@@ -331,21 +328,37 @@
                     loadedEinsaetze.forEach((e) => {
                         const isVisible = e.sichtbar === true;
                         const formattedDate = formatDateDE(e.datum);
+
+                        // Download-Liste für diesen Einsatz zusammenbauen
+                        let downloadsHtml = '';
+                        if (e.downloads && e.downloads.length > 0) {
+                            downloadsHtml = `<div class="mt-2 pt-2 border-top small text-secondary"><strong>Heruntergeladen von (${e.downloads.length}):</strong><ul class="mb-0 ps-3">`;
+                            e.downloads.forEach(dl => {
+                                downloadsHtml += `<li>${dl.salutation} ${dl.name}</li>`;
+                            });
+                            downloadsHtml += `</ul></div>`;
+                        } else {
+                            downloadsHtml = `<div class="mt-2 pt-2 border-top small text-muted"><em>Noch keine Downloads</em></div>`;
+                        }
+
                         adminList.innerHTML += `
                             <div class="einsatz-item">
-                                <div class="small">
-                                    <strong>${formattedDate}</strong> - ${e.stichwort}<br>
-                                    <span class="text-muted">Ort: ${e.ort} | ${e.einsatzleiter}</span>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <div class="form-check form-switch ms-2 me-2">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="switch_${e.id}" ${isVisible ? 'checked' : ''} onchange="toggleVisibility('${e.id}', this.checked)">
-                                        <label class="form-check-label small fw-bold ${isVisible ? 'text-success' : 'text-danger'}" id="label_${e.id}">
-                                            ${isVisible ? 'Sichtbar' : 'Aus'}
-                                        </label>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="small">
+                                        <strong>${formattedDate}</strong> - ${e.stichwort}<br>
+                                        <span class="text-muted">Ort: ${e.ort} | ${e.einsatzleiter}</span>
                                     </div>
-                                    <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deleteEinsatz('${e.id}')" title="Löschen">🗑️</button>
+                                    <div class="d-flex align-items-center">
+                                        <div class="form-check form-switch ms-2 me-2">
+                                            <input class="form-check-input" type="checkbox" role="switch" id="switch_${e.id}" ${isVisible ? 'checked' : ''} onchange="toggleVisibility('${e.id}', this.checked)">
+                                            <label class="form-check-label small fw-bold ${isVisible ? 'text-success' : 'text-danger'}" id="label_${e.id}">
+                                                ${isVisible ? 'Sichtbar' : 'Aus'}
+                                            </label>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deleteEinsatz('${e.id}')" title="Löschen">🗑️</button>
+                                    </div>
                                 </div>
+                                ${downloadsHtml}
                             </div>
                         `;
                     });
@@ -462,7 +475,7 @@
         }
     }
 
-    function generatePDF() {
+    async function generatePDF() {
         const einsatzIdx = document.getElementById('einsatz_select').value;
         const salutation = document.getElementById('salutation_select').value;
         const memberName = document.getElementById('member_name_input').value.trim();
@@ -493,6 +506,23 @@
         const datumDE = formatDateDE(e.datum);
         const beginnClean = formatTime(e.beginn);
         const endeClean = formatTime(e.ende);
+
+        // Download im Backend protokollieren
+        try {
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: "LOG_DOWNLOAD",
+                    id: e.id,
+                    salutation: salutation,
+                    name: memberName
+                })
+            });
+        } catch(err) {
+            console.error("Download konnte nicht protokolliert werden", err);
+        }
 
         setTimeout(() => {
             try {
@@ -585,12 +615,10 @@
                 const blob = doc.output('blob');
                 const blobUrl = URL.createObjectURL(blob);
 
-                // Link für manuellen Download/Öffnen vorbereiten
                 downloadLink.href = blobUrl;
                 downloadLink.download = fileName;
                 successBox.classList.remove('d-none');
 
-                // Automatischen Download ausführen
                 const link = document.createElement('a');
                 link.href = blobUrl;
                 link.download = fileName;
@@ -598,9 +626,9 @@
                 link.click();
                 document.body.removeChild(link);
 
-                // Fallback für Pop-up-Blocker auf Mobilgeräten
                 setTimeout(() => {
                     window.open(blobUrl, '_blank');
+                    loadEinsaetze(); // Aktualisiere die Admin-Ansicht im Hintergrund
                 }, 300);
 
             } catch (err) {
