@@ -15,10 +15,10 @@
     <style>
         body { background-color: #f8f9fa; }
         .form-container {
-            max-width: 800px;
+            max-width: 700px;
             margin: 20px auto;
             background: #ffffff;
-            padding: 30px;
+            padding: 25px;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
@@ -27,7 +27,7 @@
             border-radius: 5px;
             cursor: crosshair;
             width: 100%;
-            height: 180px;
+            height: 160px;
             background-color: #ffffff;
         }
         .admin-box {
@@ -41,7 +41,7 @@
             background: #fff;
             border: 1px solid #dee2e6;
             border-radius: 5px;
-            padding: 10px 15px;
+            padding: 8px 12px;
             margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
@@ -56,28 +56,28 @@
         
         <!-- Header -->
         <div class="text-center mb-4">
-            <h2 class="fw-bold">🚒 Feuerwehr Krugzell</h2>
-            <h4>Bescheinigung über Einsatzteilnahme</h4>
+            <h3 class="fw-bold text-danger">🚒 Feuerwehr Krugzell</h3>
+            <h5 class="fw-semibold">Bescheinigung über Einsatzteilnahme</h5>
             <p class="text-muted small">Gemäß Art. 9 Abs. 1 BayFwG zur Vorlage beim Arbeitgeber</p>
         </div>
 
         <!-- BEREICH 1: FÜR DIE MANNSCHAFT (Einsatznachweis herunterladen) -->
         <div class="card mb-4 border-danger">
-            <div class="card-header bg-danger text-white fw-bold fs-5">
+            <div class="card-header bg-danger text-white fw-bold fs-6">
                 📄 Einsatzbescheinigung herunterladen
             </div>
             <div class="card-body">
                 <form id="downloadForm" onsubmit="return false;">
                     <div class="mb-3">
-                        <label for="einsatz_select" class="form-label fw-bold">1. Einsatz auswählen</label>
-                        <select class="form-select form-select-lg" id="einsatz_select" required>
+                        <label for="einsatz_select" class="form-label fw-bold small">1. Einsatz auswählen</label>
+                        <select class="form-select" id="einsatz_select" required>
                             <option value="" selected disabled>Lade Einsätze aus der Cloud...</option>
                         </select>
                     </div>
 
                     <div class="mb-3">
-                        <label for="member_select" class="form-label fw-bold">2. Name der Einsatzkraft</label>
-                        <select class="form-select form-select-lg" id="member_select" required>
+                        <label for="member_select" class="form-label fw-bold small">2. Name der Einsatzkraft</label>
+                        <select class="form-select" id="member_select" required>
                             <option value="" selected disabled>-- Bitte Namen auswählen --</option>
                             <option value="Thomas Berger">Thomas Berger</option>
                             <option value="Stefan Hafner">Stefan Hafner</option>
@@ -101,7 +101,7 @@
                         </select>
                     </div>
 
-                    <button type="button" class="btn btn-danger btn-lg w-100 fw-bold py-3 mt-2" onclick="generatePDF()">
+                    <button type="button" class="btn btn-danger w-100 fw-bold py-2 mt-2" onclick="generatePDF()">
                         📥 Einsatznachweis als PDF herunterladen
                     </button>
                 </form>
@@ -109,7 +109,7 @@
         </div>
 
         <!-- BEREICH 2: FÜR FÜHRUNGSKRÄFTE (Geschützt per PIN 1873) -->
-        <div class="mt-5 text-center">
+        <div class="mt-4 text-center">
             <button class="btn btn-outline-secondary btn-sm" type="button" onclick="checkPinAndUnlock()">
                 🔒 Nur für Führungskräfte: Einsätze verwalten & neu anlegen
             </button>
@@ -117,72 +117,72 @@
 
         <div class="collapse mt-3" id="adminSection">
             <div class="admin-box">
-                <h5 class="fw-bold text-dark mb-3">➕ Neuen Einsatz zur Auswahl hinzufügen</h5>
+                <h6 class="fw-bold text-dark mb-3">➕ Neuen Einsatz zur Auswahl hinzufügen</h6>
                 <form id="einsatzForm" onsubmit="return false;">
-                    <div class="row g-3 mb-3">
+                    <div class="row g-2 mb-2">
                         <div class="col-md-4">
-                            <label for="el_datum" class="form-label fw-bold">Datum</label>
-                            <input type="date" class="form-control" id="el_datum" required>
+                            <label for="el_datum" class="form-label fw-bold small">Datum</label>
+                            <input type="date" class="form-control form-control-sm" id="el_datum" required>
                         </div>
                         <div class="col-md-4">
-                            <label for="el_stichwort" class="form-label fw-bold">Einsatzstichwort</label>
-                            <input type="text" class="form-control" id="el_stichwort" placeholder="z. B. THL GROBTIERRETTUNG" required>
+                            <label for="el_stichwort" class="form-label fw-bold small">Einsatzstichwort</label>
+                            <input type="text" class="form-control form-control-sm" id="el_stichwort" placeholder="z. B. THL GROBTIERRETTUNG" required>
                         </div>
                         <div class="col-md-4">
-                            <label for="el_ort" class="form-label fw-bold">Einsatzort</label>
-                            <input type="text" class="form-control" id="el_ort" placeholder="z. B. Iller / Krugzell" required>
+                            <label for="el_ort" class="form-label fw-bold small">Einsatzort</label>
+                            <input type="text" class="form-control form-control-sm" id="el_ort" placeholder="z. B. Iller / Krugzell" required>
                         </div>
                     </div>
 
-                    <div class="row g-3 mb-3">
+                    <div class="row g-2 mb-2">
                         <div class="col-md-4">
-                            <label for="el_beginn" class="form-label fw-bold">Alarmzeit (Beginn)</label>
-                            <input type="time" class="form-control" id="el_beginn" required>
+                            <label for="el_beginn" class="form-label fw-bold small">Alarmzeit (Beginn)</label>
+                            <input type="time" class="form-control form-control-sm" id="el_beginn" required>
                         </div>
                         <div class="col-md-4">
-                            <label for="el_ende" class="form-label fw-bold">Einsatzende</label>
-                            <input type="time" class="form-control" id="el_ende" required>
+                            <label for="el_ende" class="form-label fw-bold small">Einsatzende</label>
+                            <input type="time" class="form-control form-control-sm" id="el_ende" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-bold">Dienstgrad & Name</label>
-                            <div class="input-group">
-                                <select class="form-select" id="el_dienstgrad" style="max-width: 140px;">
+                            <label class="form-label fw-bold small">Dienstgrad & Name</label>
+                            <div class="input-group input-group-sm">
+                                <select class="form-select form-select-sm" id="el_dienstgrad" style="max-width: 120px;">
                                     <option value="1. Kommandant">1. Kdt.</option>
                                     <option value="2. Kommandant">2. Kdt.</option>
                                     <option value="Zugführer">Zugführer</option>
                                     <option value="Gruppenführer" selected>GrFü</option>
                                     <option value="Atemschutzwart">Atemschutzwart</option>
                                 </select>
-                                <input type="text" class="form-control" id="el_name" placeholder="Name (z.B. S. Renger)" required>
+                                <input type="text" class="form-control form-control-sm" id="el_name" placeholder="Name (z.B. S. Renger)" required>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="el_beschreibung" class="form-label fw-bold">Beschreibung / Details (optional)</label>
-                        <textarea class="form-control" id="el_beschreibung" rows="2" placeholder="z. B. Tier Rettung Großtier (Kuh in Iller)"></textarea>
+                    <div class="mb-2">
+                        <label for="el_beschreibung" class="form-label fw-bold small">Beschreibung / Details (optional)</label>
+                        <textarea class="form-control form-control-sm" id="el_beschreibung" rows="2" placeholder="z. B. Tier Rettung Großtier (Kuh in Iller)"></textarea>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Unterschrift der Führungskraft</label>
+                        <label class="form-label fw-bold small">Unterschrift der Führungskraft</label>
                         <div>
                             <canvas id="signature-pad"></canvas>
                         </div>
-                        <div class="mt-2 text-end">
-                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="resetSignature()">Unterschrift löschen</button>
+                        <div class="mt-1 text-end">
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0 text-decoration-none" onclick="resetSignature()">Unterschrift löschen</button>
                         </div>
                     </div>
 
-                    <button type="button" class="btn btn-success btn-lg w-100 fw-bold py-3 mt-2" onclick="saveEinsatz(event)">
+                    <button type="button" class="btn btn-success w-100 fw-bold py-2" onclick="saveEinsatz(event)">
                         💾 Einsatz freigeben & speichern
                     </button>
                 </form>
 
-                <hr class="my-4">
+                <hr class="my-3">
 
                 <!-- Sektion zum Ein- und Ausblenden von Einsätzen -->
-                <h5 class="fw-bold text-dark mb-3">👁️ Sichtbarkeit für Mannschaft steuern</h5>
-                <p class="text-muted small">Hier kannst du vergangene Einsätze für die Mannschaft ein- oder ausblenden, damit das Dropdown übersichtlich bleibt.</p>
+                <h6 class="fw-bold text-dark mb-2">👁️ Sichtbarkeit für Mannschaft steuern</h6>
+                <p class="text-muted small mb-2">Hier kannst du vergangene Einsätze für die Mannschaft ausblenden:</p>
                 <div id="admin-einsatz-list">
                     <p class="text-muted small">Lade Einsätze...</p>
                 </div>
@@ -223,7 +223,7 @@
 
         const ratio = Math.max(window.devicePixelRatio || 1, 1);
         canvas.width = canvas.offsetWidth * ratio;
-        canvas.height = 180 * ratio;
+        canvas.height = 160 * ratio;
         const ctx = canvas.getContext("2d");
         ctx.scale(ratio, ratio);
 
@@ -264,7 +264,6 @@
             const res = await fetch(GOOGLE_SCRIPT_URL);
             loadedEinsaetze = await res.json();
 
-            // Check ob Array empfangen wurde
             if (!Array.isArray(loadedEinsaetze)) {
                 throw new Error("Ungültiges Datenformat von Google Apps Script");
             }
@@ -292,11 +291,11 @@
                         const isVisible = e.sichtbar === true;
                         adminList.innerHTML += `
                             <div class="einsatz-item">
-                                <div>
+                                <div class="small">
                                     <strong>${e.datum}</strong> - ${e.stichwort}<br>
-                                    <small class="text-muted">Ort: ${e.ort} | ${e.einsatzleiter}</small>
+                                    <span class="text-muted">Ort: ${e.ort} | ${e.einsatzleiter}</span>
                                 </div>
-                                <div class="form-check form-switch">
+                                <div class="form-check form-switch ms-2">
                                     <input class="form-check-input" type="checkbox" role="switch" id="switch_${e.id}" ${isVisible ? 'checked' : ''} onchange="toggleVisibility('${e.id}', this.checked)">
                                     <label class="form-check-label small fw-bold ${isVisible ? 'text-success' : 'text-danger'}" id="label_${e.id}">
                                         ${isVisible ? 'Sichtbar' : 'Ausgeblendet'}
