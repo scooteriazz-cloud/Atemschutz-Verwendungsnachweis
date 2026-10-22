@@ -329,7 +329,6 @@
                         const isVisible = e.sichtbar === true;
                         const formattedDate = formatDateDE(e.datum);
 
-                        // Download-Liste für diesen Einsatz zusammenbauen
                         let downloadsHtml = '';
                         if (e.downloads && e.downloads.length > 0) {
                             downloadsHtml = `<div class="mt-2 pt-2 border-top small text-secondary"><strong>Heruntergeladen von (${e.downloads.length}):</strong><ul class="mb-0 ps-3">`;
@@ -475,7 +474,7 @@
         }
     }
 
-    async function generatePDF() {
+    function generatePDF() {
         const einsatzIdx = document.getElementById('einsatz_select').value;
         const salutation = document.getElementById('salutation_select').value;
         const memberName = document.getElementById('member_name_input').value.trim();
@@ -498,7 +497,6 @@
             return;
         }
 
-        // Button-Status ändern
         btn.disabled = true;
         btn.innerHTML = '⏳ PDF wird erstellt...';
 
@@ -608,9 +606,13 @@
                 doc.setFont('helvetica', 'normal');
                 doc.text('Einsatzleiter / FFW Krugzell', 14, y);
 
-                // MOBIL-KOMPATIBLER DOWNLOAD & ERFOLGSANZEIGE
+                // EINDEUTIGER DATEINAME (Verhindert das Überschreiben)
                 const cleanName = memberName.replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, '_');
-                const fileName = `Einsatzbestaetigung_${cleanName}.pdf`;
+                const cleanStichwort = (e.stichwort || 'Einsatz').replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, '_');
+                const cleanDatum = (e.datum || '').replace(/[^a-zA-Z0-9]/g, '-');
+                
+                // Beispiel: Einsatzbestaetigung_Thomas_Berger_2026-10-15_THL_Grosstierrettung.pdf
+                const fileName = `Einsatzbestaetigung_${cleanName}_${cleanDatum}_${cleanStichwort}.pdf`;
 
                 const blob = doc.output('blob');
                 const blobUrl = URL.createObjectURL(blob);
@@ -628,7 +630,7 @@
 
                 setTimeout(() => {
                     window.open(blobUrl, '_blank');
-                    loadEinsaetze(); // Aktualisiere die Admin-Ansicht im Hintergrund
+                    loadEinsaetze();
                 }, 300);
 
             } catch (err) {
